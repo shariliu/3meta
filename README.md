@@ -9,4 +9,11 @@
 - Literature search [spreadsheet](https://docs.google.com/spreadsheets/d/1mtN4g6FddpBljQzrR-mS0y414M9wQNjK4Vz09nLOe2s/edit#gid=0)
 
 ## Timeline and Todo:
-1. 
+### October 15, 2020 - deadline to submit to Meta-Lab
+1. Read all resources
+2. More thorough literature search 
+3. Set up our own submission materials based on templates (**by October 1**)
+4. Process and format data based on guidelines (including codebook, PRISMA, meta-data) (**by October 7**)
+5. Double check everything, submit.
+
+### December 1, 2020 - first draft of analysis plan, send to experts for review
