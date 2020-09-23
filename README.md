@@ -9,10 +9,10 @@
 - Literature search [spreadsheet](https://docs.google.com/spreadsheets/d/1mtN4g6FddpBljQzrR-mS0y414M9wQNjK4Vz09nLOe2s/edit#gid=0)
 
 ## Timeline and Todo:
-### October 15, 2020 - deadline to submit to Meta-Lab
-1. Read all resources
-2. More thorough literature search 
-3. Set up our own submission materials based on templates (**by October 1**)
+### October 15, 2020 - deadline to submit to MetaLab
+1. Read all resources, and go through [tutorials](http://metalab.stanford.edu/tutorials.html) on Metalab
+2. Set up our own submission materials based on templates (**by September 23**)
+3. Follow MetaLab workflow - define research question, do a literature search etc.
 4. Process and format data based on guidelines (including codebook, PRISMA, meta-data) (**by October 7**)
 5. Double check everything, submit.
 
