@@ -10,7 +10,8 @@
 
 ## Materials for our meta-analysis
 - Folder of all relevant papers on [Paperpile](https://paperpile.com/shared/GwZilR)
-- 
+-- As you go through each paper, you'll want to **highlight** the portions of text that you're putting into our meta-analysis spreadsheet
+- Google Drive [folder](https://drive.google.com/drive/folders/171sHO97PPB4KqR6rAotvKzkTopYL1-km?usp=sharing) with all of our spreadsheets (you'll need to log into babylab2 to access).
 
 ## Timeline and Todo:
 ### October 15, 2020 - deadline to submit to MetaLab
