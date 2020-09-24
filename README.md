@@ -8,6 +8,10 @@
 - Meta-analysis [template](https://docs.google.com/spreadsheets/d/12Y_2BcFSu48t0F8a_xrY1Ro2fJoCIV1h8O627WNcrjY/edit#gid=0) for final, included studies 
 - Literature search [template](https://docs.google.com/spreadsheets/d/1mtN4g6FddpBljQzrR-mS0y414M9wQNjK4Vz09nLOe2s/edit#gid=0) for documenting the process of sorting through potentially relevant papers 
 
+## Materials for our meta-analysis
+- Folder of all relevant papers on [Paperpile](https://paperpile.com/shared/GwZilR)
+- 
+
 ## Timeline and Todo:
 ### October 15, 2020 - deadline to submit to MetaLab
 1. Read all resources, and go through [tutorials](http://metalab.stanford.edu/tutorials.html) on Metalab
