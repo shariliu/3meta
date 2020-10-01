@@ -6,17 +6,102 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(comment = "##", echo=FALSE, warning=FALSE, message=FALSE, include=TRUE, fig.width = 12)
+options(scipen = 0, digits = 2)
+
+## load required packages
+ipak <- function (pkg) {
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr")
+
+ipak(packages)
 ```
+
+```{r helper-functions}
+options(pillar.sigfig=4)
+```
+
 
 ### Luo, Y. (2011). Three-month-old infants attribute goals to a non-human agent. Developmental Science, 14(2), 453–460.
 
+```{r luo2011}
+luo2011 <- read.csv(file = "formatted_data/csv/luo2011.csv", header=TRUE) %>%
+  mutate(experiment = case_when(condition=="one-object" ~ "Exp.1",
+                                condition=="two-object" ~ "Exp.1",
+                                condition=="different-positions" ~ "Exp.2"),
+         MA_condition = case_when(condition=="one-object" ~ "1_oneobject",
+                                condition=="two-object" ~ "1_twoobject",
+                                condition=="different-positions" ~ "2_differentpositions")
+  ) %>%
+  mutate(exp_look = old.goal, unexp_look = new.goal)
+
+luo2011_descriptives <- luo2011 %>% 
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(gender=="F") / n_babies)
+```
+
 ### Skerry, A. E., Carey, S. E., & Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.
 
+```{r skerry2013}
+skerry2013 <- read.csv(file="formatted_data/csv/skerry2013_liu2019.csv") %>%
+  filter(paper=="SCS")%>%
+  mutate(MA_condition=case_when(experiment== "SCS.Exp.1" & training == "effective.training" ~ "1_effectiveactiontraining",
+                                experiment== "SCS.Exp.2" & training == "ineffective.training" ~ "2_ineffectiveactiontraining",
+                                experiment== "SCS.Exp.3" & training == "no.training" ~ "3_notraining",
+                                experiment== "SCS.Exp.4" & hab == "constrained" ~ "4_constrainedactionhabituation",
+                                experiment== "SCS.Exp.5" & hab == "unconstrained" ~ "5_unconstrainedactionhabituation"
+                                )
+         ) %>%
+    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff)
+
+
+skerry2013_descriptives <- skerry2013 %>% 
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1_prop = mean(unexp_look_prop, na.rm=TRUE),
+                   sd_1_prop = sd(unexp_look_prop, na.rm=TRUE),
+                   x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(sex=="f") / n_babies)
+```
 ### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
+```{r gerson2014a}
+
+```
 ### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
+```{r gerson2014b}
+
+```
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
+```{r choi2018}
+
+```
+
+### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). Ongoing project.
+
+```{r choi_ongoing}
+
+```
+
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
+
+```{r liu2019}
+
+```
