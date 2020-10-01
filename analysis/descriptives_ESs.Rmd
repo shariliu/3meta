@@ -81,7 +81,26 @@ skerry2013_descriptives <- skerry2013 %>%
 ### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
 ```{r gerson2014a}
+gerson2014a <- read.csv(file="formatted_data/csv/gerson2014a_cd.csv", header=TRUE) %>%
+  mutate(experiment = case_when(Condition=="Act" ~"Exp.1",
+                                Condition=="Obs" ~"Exp.1",
+                                Condition=="gen" ~ "Exp.2"),
+         MA_condition = case_when(Condition=="Act" ~"1_Active",
+                                Condition=="Obs" ~"1_Observational",
+                                Condition=="gen" ~ "2_Generalization"),
+         unexp_look = NewGoal_Avg,
+         exp_look = OldGoal_Avg
+         )
 
+gerson2014a_descriptives <- gerson2014a %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(Sex=="f") / n_babies)
 ```
 ### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
