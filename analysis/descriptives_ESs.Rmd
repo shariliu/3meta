@@ -1,0 +1,22 @@
+---
+title: "MetaLab Challenge Script"
+author: "Shari Liu"
+date: "10/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Luo, Y. (2011). Three-month-old infants attribute goals to a non-human agent. Developmental Science, 14(2), 453–460.
+
+### Skerry, A. E., Carey, S. E., & Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.
+
+### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
+
+### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
+
+### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
+
+### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
