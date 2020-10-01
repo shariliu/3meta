@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(comment = "##", echo=FALSE, warning=FALSE, message=FALSE, include=TRUE, fig.width = 12)
+knitr::opts_chunk$set(comment = "#")
 options(scipen = 0, digits = 2)
 
 ## load required packages
@@ -49,6 +49,8 @@ luo2011_descriptives <- luo2011 %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(gender=="F") / n_babies)
+
+luo2011_descriptives
 ```
 
 ### Skerry, A. E., Carey, S. E., & Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.
@@ -77,6 +79,8 @@ skerry2013_descriptives <- skerry2013 %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(sex=="f") / n_babies)
+
+skerry2013_descriptives
 ```
 ### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
@@ -101,6 +105,8 @@ gerson2014a_descriptives <- gerson2014a %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(Sex=="f") / n_babies)
+
+gerson2014a_descriptives
 ```
 ### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
@@ -125,6 +131,8 @@ gerson2014b_descriptives <- gerson2014b %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(Sex=="Female") / n_babies)
+
+gerson2014b_descriptives
 ```
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
@@ -152,6 +160,8 @@ choi2018_descriptives <- choi2018 %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(sex=="F") / n_babies)
+
+choi2018_descriptives
 ```
 
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). Ongoing project.
@@ -180,6 +190,8 @@ choi_ongoing_descriptives <- choi_ongoing %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(sex=="F") / n_babies)
+
+choi_ongoing_descriptives
 ```
 
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
@@ -190,7 +202,7 @@ liu2019 <- read.csv(file="formatted_data/csv/skerry2013_liu2019.csv") %>%
   mutate(MA_condition=case_when(experiment== "Exp.1" ~ "1_pickupglove",
                                 experiment== "Exp.2" ~ "2_pickupbarehand",
                                 experiment== "Exp.3" & hab == "constrained" ~ "3_statechangebarrier",
-                                experiment== "Exp.3" & hab == "constrained" ~ "3_statechangenobarrier",
+                                experiment== "Exp.3" & hab == "unconstrained" ~ "3_statechangenobarrier",
                                 experiment== "Exp.4" ~ "4_statechangenotcausal",
                                 experiment== "Exp.5" & causal == "yes" ~ "5_statechangecausal",
                                 experiment== "Exp.5" & causal == "no" ~ "5_statechangenotcausal"
@@ -209,4 +221,5 @@ liu2019_descriptives <- liu2019 %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(sex=="f") / n_babies)
+liu2019_descriptives
 ```
