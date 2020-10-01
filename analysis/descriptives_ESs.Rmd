@@ -130,12 +130,12 @@ gerson2014b_descriptives <- gerson2014b %>%
 
 ```{r choi2018}
 choi2018 <- read.csv(file="formatted_data/csv/choi2018.csv", header=TRUE) %>%
-    mutate(experiment = case_when(condition=="Equidistant" ~"Exp.1",
-                                condition=="Near-target" ~"Exp.1",
-                                condition=="Far-target" ~ "Exp.1"),
-         MA_condition = case_when(condition=="Equidistant" ~"1_equidistant",
-                                condition=="Near-target" ~"1_neartarget",
-                                condition=="Far-target" ~ "1_fartarget")) %>%
+    mutate(experiment = case_when(condition=="Two-object" ~"Exp.1",
+                                condition=="One-object" ~"Exp.1",
+                                condition=="Hidden" ~ "Exp.1"),
+         MA_condition = case_when(condition=="Two-object" ~"1_twoobject",
+                                condition=="One-object" ~"1_oneobject",
+                                condition=="Hidden" ~ "1_hidden")) %>%
   #TODO figure out what the DV was in this study, avg or individual looks?
   mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
          Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
@@ -185,5 +185,28 @@ choi_ongoing_descriptives <- choi_ongoing %>%
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
 
 ```{r liu2019}
+liu2019 <- read.csv(file="formatted_data/csv/skerry2013_liu2019.csv") %>%
+  filter(paper=="LBS")%>%
+  mutate(MA_condition=case_when(experiment== "Exp.1" ~ "1_pickupglove",
+                                experiment== "Exp.2" ~ "2_pickupbarehand",
+                                experiment== "Exp.3" & hab == "constrained" ~ "3_statechangebarrier",
+                                experiment== "Exp.3" & hab == "constrained" ~ "3_statechangenobarrier",
+                                experiment== "Exp.4" ~ "4_statechangenotcausal",
+                                experiment== "Exp.5" & causal == "yes" ~ "5_statechangecausal",
+                                experiment== "Exp.5" & causal == "no" ~ "5_statechangenotcausal"
+                                )
+         ) %>%
+    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff)
 
+liu2019_descriptives <- liu2019 %>% 
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1_prop = mean(unexp_look_prop, na.rm=TRUE),
+                   sd_1_prop = sd(unexp_look_prop, na.rm=TRUE),
+                   x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(sex=="f") / n_babies)
 ```
