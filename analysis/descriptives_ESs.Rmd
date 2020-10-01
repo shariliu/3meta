@@ -105,18 +105,81 @@ gerson2014a_descriptives <- gerson2014a %>%
 ### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
 ```{r gerson2014b}
+gerson2014b <- read.csv(file="formatted_data/csv/gerson2014b_ibd.csv", header=TRUE) %>%
+    mutate(experiment = case_when(Condition=="Active" ~"Exp.1",
+                                Condition=="Observation" ~"Exp.1",
+                                Condition=="Control" ~ "Exp.1"),
+         MA_condition = case_when(Condition=="Active" ~"1_Active",
+                                Condition=="Observation" ~"1_Observation",
+                                Condition=="Control" ~ "1_Control"),
+         unexp_look = NewGoal_Avg,
+         exp_look = OldGoal_Avg
+         )
 
+gerson2014b_descriptives <- gerson2014b %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(Sex=="Female") / n_babies)
 ```
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
 ```{r choi2018}
+choi2018 <- read.csv(file="formatted_data/csv/choi2018.csv", header=TRUE) %>%
+    mutate(experiment = case_when(condition=="Equidistant" ~"Exp.1",
+                                condition=="Near-target" ~"Exp.1",
+                                condition=="Far-target" ~ "Exp.1"),
+         MA_condition = case_when(condition=="Equidistant" ~"1_equidistant",
+                                condition=="Near-target" ~"1_neartarget",
+                                condition=="Far-target" ~ "1_fartarget")) %>%
+  #TODO figure out what the DV was in this study, avg or individual looks?
+  mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
+         Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
+  mutate(unexp_look = New.goal_Avg,
+         exp_look = Old.goal_Avg
+         )
 
+choi2018_descriptives <- choi2018 %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(sex=="F") / n_babies)
 ```
 
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). Ongoing project.
 
 ```{r choi_ongoing}
+choi_ongoing <- read.csv(file="formatted_data/csv/choi_ongoing.csv", header=TRUE) %>%
+    mutate(experiment = case_when(condition=="Equidistant" ~"Exp.1",
+                                condition=="Near-target" ~"Exp.1",
+                                condition=="Far-target" ~ "Exp.1"),
+         MA_condition = case_when(condition=="Equidistant" ~"1_equidistant",
+                                condition=="Near-target" ~"1_neartarget",
+                                condition=="Far-target" ~ "1_fartarget")) %>%
+  #TODO figure out what the DV was in this study, avg or individual looks?
+  mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
+         Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
+  mutate(unexp_look = New.goal_Avg,
+         exp_look = Old.goal_Avg
+         )
 
+choi_ongoing_descriptives <- choi_ongoing %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(sex=="F") / n_babies)
 ```
 
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
