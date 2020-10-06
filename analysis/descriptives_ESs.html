@@ -369,7 +369,7 @@ summary {
 </div>
 
 
-<pre class="r"><code>options(pillar.sigfig=4)</code></pre>
+<pre class="r"><code>options(digits=2)</code></pre>
 <div id="luo-y.-2011.-three-month-old-infants-attribute-goals-to-a-non-human-agent.-developmental-science-142-453460." class="section level3">
 <h3>Luo, Y. (2011). Three-month-old infants attribute goals to a non-human agent. Developmental Science, 14(2), 453–460.</h3>
 <pre class="r"><code>luo2011 &lt;- read.csv(file = &quot;formatted_data/csv/luo2011.csv&quot;, header=TRUE) %&gt;%
@@ -762,8 +762,8 @@ choi2018_descriptives &lt;- choi2018 %&gt;%
 </tbody>
 </table>
 </div>
-<div id="choi-y.-j.-mou-y.-luo-y.-2018.-ongoing-project." class="section level3">
-<h3>Choi, Y.-J., Mou, Y., &amp; Luo, Y. (2018). Ongoing project.</h3>
+<div id="choi-y.-j.-mou-y.-luo-y.-unpublished.-ongoing-project." class="section level3">
+<h3>Choi, Y.-J., Mou, Y., &amp; Luo, Y. (unpublished). Ongoing project.</h3>
 <pre class="r"><code>choi_ongoing &lt;- read.csv(file=&quot;formatted_data/csv/choi_ongoing.csv&quot;, header=TRUE) %&gt;%
     mutate(experiment = case_when(condition==&quot;Equidistant&quot; ~&quot;Exp.1&quot;,
                                 condition==&quot;Near-target&quot; ~&quot;Exp.1&quot;,

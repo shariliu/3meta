@@ -23,7 +23,7 @@ ipak(packages)
 ```
 
 ```{r helper-functions}
-options(pillar.sigfig=4)
+options(digits=2)
 ```
 
 
@@ -164,7 +164,7 @@ choi2018_descriptives <- choi2018 %>%
 knitr::kable(choi2018_descriptives)
 ```
 
-### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). Ongoing project.
+### Choi, Y.-J., Mou, Y., & Luo, Y. (unpublished). Ongoing project.
 
 ```{r choi_ongoing}
 choi_ongoing <- read.csv(file="formatted_data/csv/choi_ongoing.csv", header=TRUE) %>%
@@ -174,12 +174,16 @@ choi_ongoing <- read.csv(file="formatted_data/csv/choi_ongoing.csv", header=TRUE
          MA_condition = case_when(condition=="Equidistant" ~"1_equidistant",
                                 condition=="Near-target" ~"1_neartarget",
                                 condition=="Far-target" ~ "1_fartarget")) %>%
+  separate(age_md, into = c("age_m", "age_d"), sep=",") %>%
+  mutate(age_m = as.numeric(age_m),
+         age_d = as.numeric(age_d)) %>%
+  mutate(ageday= 30.44 * age_m + age_d) %>%
   #TODO figure out what the DV was in this study, avg or individual looks?
   mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
          Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
   mutate(unexp_look = New.goal_Avg,
          exp_look = Old.goal_Avg
-         )
+         ) 
 
 choi_ongoing_descriptives <- choi_ongoing %>%
   group_by(MA_condition) %>%
@@ -189,7 +193,9 @@ choi_ongoing_descriptives <- choi_ongoing %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
-                   prop_girls = sum(sex=="F") / n_babies)
+                   prop_girls = sum(sex=="F") / n_babies,
+                   m_age= mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])
 
 knitr::kable(choi_ongoing_descriptives)
 ```
