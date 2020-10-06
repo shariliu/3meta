@@ -50,7 +50,7 @@ luo2011_descriptives <- luo2011 %>%
                    n_babies = n(),
                    prop_girls = sum(gender=="F") / n_babies)
 
-luo2011_descriptives
+knitr::kable(luo2011_descriptives)
 ```
 
 ### Skerry, A. E., Carey, S. E., & Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.
@@ -80,7 +80,7 @@ skerry2013_descriptives <- skerry2013 %>%
                    n_babies = n(),
                    prop_girls = sum(sex=="f") / n_babies)
 
-skerry2013_descriptives
+knitr::kable(skerry2013_descriptives)
 ```
 ### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
@@ -106,7 +106,7 @@ gerson2014a_descriptives <- gerson2014a %>%
                    n_babies = n(),
                    prop_girls = sum(Sex=="f") / n_babies)
 
-gerson2014a_descriptives
+knitr::kable(gerson2014a_descriptives)
 ```
 ### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
@@ -132,7 +132,7 @@ gerson2014b_descriptives <- gerson2014b %>%
                    n_babies = n(),
                    prop_girls = sum(Sex=="Female") / n_babies)
 
-gerson2014b_descriptives
+knitr::kable(gerson2014b_descriptives)
 ```
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
@@ -161,7 +161,7 @@ choi2018_descriptives <- choi2018 %>%
                    n_babies = n(),
                    prop_girls = sum(sex=="F") / n_babies)
 
-choi2018_descriptives
+knitr::kable(choi2018_descriptives)
 ```
 
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). Ongoing project.
@@ -191,7 +191,7 @@ choi_ongoing_descriptives <- choi_ongoing %>%
                    n_babies = n(),
                    prop_girls = sum(sex=="F") / n_babies)
 
-choi_ongoing_descriptives
+knitr::kable(choi_ongoing_descriptives)
 ```
 
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
@@ -221,5 +221,5 @@ liu2019_descriptives <- liu2019 %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(sex=="f") / n_babies)
-liu2019_descriptives
+knitr::kable(liu2019_descriptives)
 ```
