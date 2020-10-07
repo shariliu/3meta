@@ -229,3 +229,28 @@ liu2019_descriptives <- liu2019 %>%
                    prop_girls = sum(sex=="f") / n_babies)
 knitr::kable(liu2019_descriptives)
 ```
+
+### Liu, S., Woo., B. M., & Spelke, E. S. (unpublished). Three-month-olds' understanding of object-directed actions that cause state changes.
+```{r liu_unpublished}
+liu_unpublished <- read.csv(file="formatted_data/csv/liu_unpublished.csv") %>%
+  filter(trialtype=="test" & is.na(msg)) %>%
+  select(subj, sex, agedays, duration.datavyu, testtrial, trialn) %>%
+  mutate(MA_condition="1_statechange_objectswap") %>%
+  mutate(subj = as.factor(subj),
+         testtrial = as.factor(testtrial)) %>%
+  group_by(subj, sex, agedays, MA_condition, testtrial) %>%
+  dplyr::summarize(avg.look = mean(duration.datavyu, na.rm=TRUE)) %>%
+  spread(testtrial,avg.look) %>%
+  mutate(exp_look = old.goal, unexp_look = new.goal)
+
+liu_unpublished_descriptives <- liu_unpublished %>% 
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(sex=="f") / n_babies)
+knitr::kable(liu_unpublished_descriptives)
+```
