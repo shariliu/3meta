@@ -79,10 +79,10 @@ skerry2013_descriptives <- skerry2013 %>%
 
 knitr::kable(skerry2013_descriptives, digits = 4)
 ```
-### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
+### Gerson, S. A., & Woodward, A. L. (2014b). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
-```{r gerson2014a}
-gerson2014a <- read.csv(file="formatted_data/csv/gerson2014a_cd.csv", header=TRUE) %>%
+```{r gerson2014b}
+gerson2014b <- read.csv(file="formatted_data/csv/gerson2014a_cd.csv", header=TRUE) %>%
   mutate(experiment = case_when(Condition=="Act" ~"Exp.1",
                                 Condition=="Obs" ~"Exp.1",
                                 Condition=="gen" ~ "Exp.2"),
@@ -93,7 +93,7 @@ gerson2014a <- read.csv(file="formatted_data/csv/gerson2014a_cd.csv", header=TRU
          exp_look = OldGoal_Avg
          )
 
-gerson2014a_descriptives <- gerson2014a %>%
+gerson2014b_descriptives <- gerson2014b %>%
   group_by(MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
@@ -105,10 +105,10 @@ gerson2014a_descriptives <- gerson2014a %>%
 
 knitr::kable(gerson2014a_descriptives, digits = 4)
 ```
-### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
+### Gerson, S. A., & Woodward, A. L. (2014a). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
 ```{r gerson2014b}
-gerson2014b <- read.csv(file="formatted_data/csv/gerson2014b_ibd.csv", header=TRUE) %>%
+gerson2014a <- read.csv(file="formatted_data/csv/gerson2014b_ibd.csv", header=TRUE) %>%
     mutate(experiment = case_when(Condition=="Active" ~"Exp.1",
                                 Condition=="Observation" ~"Exp.1",
                                 Condition=="Control" ~ "Exp.1"),
@@ -119,7 +119,7 @@ gerson2014b <- read.csv(file="formatted_data/csv/gerson2014b_ibd.csv", header=TR
          exp_look = OldGoal_Avg
          )
 
-gerson2014b_descriptives <- gerson2014b %>%
+gerson2014a_descriptives <- gerson2014a %>%
   group_by(MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
