@@ -371,7 +371,7 @@ summary {
 
 <div id="luo-y.-2011.-three-month-old-infants-attribute-goals-to-a-non-human-agent.-developmental-science-142-453460." class="section level3">
 <h3>Luo, Y. (2011). Three-month-old infants attribute goals to a non-human agent. Developmental Science, 14(2), 453–460.</h3>
-<pre class="r"><code>luo2011 &lt;- read.csv(file = &quot;formatted_data/csv/luo2011.csv&quot;, header=TRUE) %&gt;%
+<pre class="r"><code>luo2011 &lt;- read.csv(file = &quot;formatted_data/csv_and_codebook/luo2011.csv&quot;, header=TRUE) %&gt;%
   mutate(experiment = case_when(condition==&quot;one-object&quot; ~ &quot;Exp.1&quot;,
                                 condition==&quot;two-object&quot; ~ &quot;Exp.1&quot;,
                                 condition==&quot;different-positions&quot; ~ &quot;Exp.2&quot;),
@@ -379,6 +379,10 @@ summary {
                                 condition==&quot;two-object&quot; ~ &quot;1_twoobject&quot;,
                                 condition==&quot;different-positions&quot; ~ &quot;2_differentpositions&quot;)
   ) %&gt;%
+  separate(age_md, into = c(&quot;age_m&quot;, &quot;age_d&quot;), sep=&quot;,&quot;) %&gt;%
+  mutate(age_m = as.numeric(age_m),
+         age_d = as.numeric(age_d)) %&gt;%
+  mutate(ageday= 30.44 * age_m + age_d) %&gt;%
   mutate(exp_look = old.goal, unexp_look = new.goal)
 
 luo2011_descriptives &lt;- luo2011 %&gt;% 
@@ -389,7 +393,9 @@ luo2011_descriptives &lt;- luo2011 %&gt;%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method=&quot;pearson&quot;, use=&quot;pairwise.complete.obs&quot;),
                    n_babies = n(),
-                   prop_girls = sum(gender==&quot;F&quot;) / n_babies)</code></pre>
+                   prop_girls = sum(gender==&quot;F&quot;) / n_babies,
+                   m_age= mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])</code></pre>
 <pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
 <pre class="r"><code>knitr::kable(luo2011_descriptives, digits = 4)</code></pre>
 <table>
@@ -403,6 +409,8 @@ luo2011_descriptives &lt;- luo2011 %&gt;%
 <th align="right">r</th>
 <th align="right">n_babies</th>
 <th align="right">prop_girls</th>
+<th align="right">m_age</th>
+<th align="right">range_age</th>
 </tr>
 </thead>
 <tbody>
@@ -415,6 +423,8 @@ luo2011_descriptives &lt;- luo2011 %&gt;%
 <td align="right">0.4284</td>
 <td align="right">12</td>
 <td align="right">0.5</td>
+<td align="right">97.09</td>
+<td align="right">47.88</td>
 </tr>
 <tr class="even">
 <td align="left">1_twoobject</td>
@@ -425,6 +435,8 @@ luo2011_descriptives &lt;- luo2011 %&gt;%
 <td align="right">0.3206</td>
 <td align="right">12</td>
 <td align="right">0.5</td>
+<td align="right">103.62</td>
+<td align="right">49.88</td>
 </tr>
 <tr class="odd">
 <td align="left">2_differentpositions</td>
@@ -435,13 +447,15 @@ luo2011_descriptives &lt;- luo2011 %&gt;%
 <td align="right">0.2768</td>
 <td align="right">12</td>
 <td align="right">0.5</td>
+<td align="right">93.06</td>
+<td align="right">36.44</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div id="skerry-a.-e.-carey-s.-e.-spelke-e.-s.-2013.-first-person-action-experience-reveals-sensitivity-to-action-efficiency-in-prereaching-infants.-proceedings-of-the-national-academy-of-sciences-of-the-united-states-of-america-11046-1872818733." class="section level3">
 <h3>Skerry, A. E., Carey, S. E., &amp; Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.</h3>
-<pre class="r"><code>skerry2013 &lt;- read.csv(file=&quot;formatted_data/csv/skerry2013_liu2019.csv&quot;) %&gt;%
+<pre class="r"><code>skerry2013 &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/skerry2013_liu2019.csv&quot;) %&gt;%
   filter(paper==&quot;SCS&quot;)%&gt;%
   mutate(MA_condition=case_when(experiment== &quot;SCS.Exp.1&quot; &amp; training == &quot;effective.training&quot; ~ &quot;1_effectiveactiontraining&quot;,
                                 experiment== &quot;SCS.Exp.2&quot; &amp; training == &quot;ineffective.training&quot; ~ &quot;2_ineffectiveactiontraining&quot;,
@@ -557,15 +571,15 @@ skerry2013_descriptives &lt;- skerry2013 %&gt;%
 </tbody>
 </table>
 </div>
-<div id="gerson-s.-a.-woodward-a.-l.-2014a.-learning-from-their-own-actions-the-unique-effect-of-producing-actions-on-infants-action-understanding.-child-development-851-264277." class="section level3">
-<h3>Gerson, S. A., &amp; Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.</h3>
-<pre class="r"><code>gerson2014a &lt;- read.csv(file=&quot;formatted_data/csv/gerson2014a_cd.csv&quot;, header=TRUE) %&gt;%
-  mutate(experiment = case_when(Condition==&quot;Act&quot; ~&quot;Exp.1&quot;,
-                                Condition==&quot;Obs&quot; ~&quot;Exp.1&quot;,
-                                Condition==&quot;gen&quot; ~ &quot;Exp.2&quot;),
-         MA_condition = case_when(Condition==&quot;Act&quot; ~&quot;1_Active&quot;,
-                                Condition==&quot;Obs&quot; ~&quot;1_Observational&quot;,
-                                Condition==&quot;gen&quot; ~ &quot;2_Generalization&quot;),
+<div id="gerson-s.-a.-woodward-a.-l.-2014a.-the-joint-role-of-trained-untrained-and-observed-actions-at-the-origins-of-goal-recognition.-infant-behavior-development-371-94104." class="section level3">
+<h3>Gerson, S. A., &amp; Woodward, A. L. (2014a). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior &amp; Development, 37(1), 94–104.</h3>
+<pre class="r"><code>gerson2014a &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/gerson2014a_ibd.csv&quot;, header=TRUE) %&gt;%
+    mutate(experiment = case_when(Condition==&quot;Active&quot; ~&quot;Exp.1&quot;,
+                                Condition==&quot;Observation&quot; ~&quot;Exp.1&quot;,
+                                Condition==&quot;Control&quot; ~ &quot;Exp.1&quot;),
+         MA_condition = case_when(Condition==&quot;Active&quot; ~&quot;1_Active&quot;,
+                                Condition==&quot;Observation&quot; ~&quot;1_Observation&quot;,
+                                Condition==&quot;Control&quot; ~ &quot;1_Control&quot;),
          unexp_look = NewGoal_Avg,
          exp_look = OldGoal_Avg
          )
@@ -578,7 +592,9 @@ gerson2014a_descriptives &lt;- gerson2014a %&gt;%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method=&quot;pearson&quot;, use=&quot;pairwise.complete.obs&quot;),
                    n_babies = n(),
-                   prop_girls = sum(Sex==&quot;f&quot;) / n_babies)</code></pre>
+                   prop_girls = sum(Sex==&quot;Female&quot;) / n_babies,
+                    m_age= mean(Age*30.44),
+                   range_age = range(Age*30.44)[2] - range(Age*30.44)[1])</code></pre>
 <pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
 <pre class="r"><code>knitr::kable(gerson2014a_descriptives, digits = 4)</code></pre>
 <table>
@@ -592,51 +608,59 @@ gerson2014a_descriptives &lt;- gerson2014a %&gt;%
 <th align="right">r</th>
 <th align="right">n_babies</th>
 <th align="right">prop_girls</th>
+<th align="right">m_age</th>
+<th align="right">range_age</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td align="left">1_Active</td>
-<td align="right">9.435</td>
-<td align="right">6.152</td>
-<td align="right">9.146</td>
-<td align="right">4.575</td>
-<td align="right">0.3584</td>
-<td align="right">30</td>
-<td align="right">0.5000</td>
+<td align="right">12.699</td>
+<td align="right">9.988</td>
+<td align="right">15.081</td>
+<td align="right">12.618</td>
+<td align="right">0.7717</td>
+<td align="right">24</td>
+<td align="right">0.5833</td>
+<td align="right">105.6</td>
+<td align="right">30.44</td>
 </tr>
 <tr class="even">
-<td align="left">1_Observational</td>
-<td align="right">8.994</td>
-<td align="right">10.129</td>
-<td align="right">8.673</td>
-<td align="right">11.438</td>
-<td align="right">0.5375</td>
-<td align="right">30</td>
-<td align="right">0.5667</td>
+<td align="left">1_Control</td>
+<td align="right">8.003</td>
+<td align="right">10.489</td>
+<td align="right">7.425</td>
+<td align="right">10.627</td>
+<td align="right">0.7098</td>
+<td align="right">24</td>
+<td align="right">0.5000</td>
+<td align="right">104.8</td>
+<td align="right">29.53</td>
 </tr>
 <tr class="odd">
-<td align="left">2_Generalization</td>
-<td align="right">7.111</td>
-<td align="right">6.538</td>
-<td align="right">6.045</td>
-<td align="right">5.302</td>
-<td align="right">0.6467</td>
-<td align="right">30</td>
-<td align="right">0.5000</td>
+<td align="left">1_Observation</td>
+<td align="right">7.630</td>
+<td align="right">8.729</td>
+<td align="right">8.442</td>
+<td align="right">8.925</td>
+<td align="right">0.3890</td>
+<td align="right">24</td>
+<td align="right">0.5417</td>
+<td align="right">106.5</td>
+<td align="right">30.44</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div id="gerson-s.-a.-woodward-a.-l.-2014b.-the-joint-role-of-trained-untrained-and-observed-actions-at-the-origins-of-goal-recognition.-infant-behavior-development-371-94104." class="section level3">
-<h3>Gerson, S. A., &amp; Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior &amp; Development, 37(1), 94–104.</h3>
-<pre class="r"><code>gerson2014b &lt;- read.csv(file=&quot;formatted_data/csv/gerson2014b_ibd.csv&quot;, header=TRUE) %&gt;%
-    mutate(experiment = case_when(Condition==&quot;Active&quot; ~&quot;Exp.1&quot;,
-                                Condition==&quot;Observation&quot; ~&quot;Exp.1&quot;,
-                                Condition==&quot;Control&quot; ~ &quot;Exp.1&quot;),
-         MA_condition = case_when(Condition==&quot;Active&quot; ~&quot;1_Active&quot;,
-                                Condition==&quot;Observation&quot; ~&quot;1_Observation&quot;,
-                                Condition==&quot;Control&quot; ~ &quot;1_Control&quot;),
+<div id="gerson-s.-a.-woodward-a.-l.-2014b.-learning-from-their-own-actions-the-unique-effect-of-producing-actions-on-infants-action-understanding.-child-development-851-264277." class="section level3">
+<h3>Gerson, S. A., &amp; Woodward, A. L. (2014b). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.</h3>
+<pre class="r"><code>gerson2014b &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/gerson2014b_cd.csv&quot;, header=TRUE) %&gt;%
+  mutate(experiment = case_when(Condition==&quot;Act&quot; ~&quot;Exp.1&quot;,
+                                Condition==&quot;Obs&quot; ~&quot;Exp.1&quot;,
+                                Condition==&quot;gen&quot; ~ &quot;Exp.2&quot;),
+         MA_condition = case_when(Condition==&quot;Act&quot; ~&quot;1_Active&quot;,
+                                Condition==&quot;Obs&quot; ~&quot;1_Observational&quot;,
+                                Condition==&quot;gen&quot; ~ &quot;2_Generalization&quot;),
          unexp_look = NewGoal_Avg,
          exp_look = OldGoal_Avg
          )
@@ -649,7 +673,9 @@ gerson2014b_descriptives &lt;- gerson2014b %&gt;%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method=&quot;pearson&quot;, use=&quot;pairwise.complete.obs&quot;),
                    n_babies = n(),
-                   prop_girls = sum(Sex==&quot;Female&quot;) / n_babies)</code></pre>
+                   prop_girls = sum(Sex==&quot;f&quot;) / n_babies,
+                   m_age= mean(Age_m*30.44),
+                   range_age = range(Age_m*30.44)[2] - range(Age_m*30.44)[1])</code></pre>
 <pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
 <pre class="r"><code>knitr::kable(gerson2014b_descriptives, digits = 4)</code></pre>
 <table>
@@ -663,51 +689,63 @@ gerson2014b_descriptives &lt;- gerson2014b %&gt;%
 <th align="right">r</th>
 <th align="right">n_babies</th>
 <th align="right">prop_girls</th>
+<th align="right">m_age</th>
+<th align="right">range_age</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td align="left">1_Active</td>
-<td align="right">12.699</td>
-<td align="right">9.988</td>
-<td align="right">15.081</td>
-<td align="right">12.618</td>
-<td align="right">0.7717</td>
-<td align="right">24</td>
-<td align="right">0.5833</td>
+<td align="right">9.435</td>
+<td align="right">6.152</td>
+<td align="right">9.146</td>
+<td align="right">4.575</td>
+<td align="right">0.3584</td>
+<td align="right">30</td>
+<td align="right">0.5000</td>
+<td align="right">107.5</td>
+<td align="right">34.40</td>
 </tr>
 <tr class="even">
-<td align="left">1_Control</td>
-<td align="right">8.003</td>
-<td align="right">10.489</td>
-<td align="right">7.425</td>
-<td align="right">10.627</td>
-<td align="right">0.7098</td>
-<td align="right">24</td>
-<td align="right">0.5000</td>
+<td align="left">1_Observational</td>
+<td align="right">8.994</td>
+<td align="right">10.129</td>
+<td align="right">8.673</td>
+<td align="right">11.438</td>
+<td align="right">0.5375</td>
+<td align="right">30</td>
+<td align="right">0.5667</td>
+<td align="right">106.1</td>
+<td align="right">33.48</td>
 </tr>
 <tr class="odd">
-<td align="left">1_Observation</td>
-<td align="right">7.630</td>
-<td align="right">8.729</td>
-<td align="right">8.442</td>
-<td align="right">8.925</td>
-<td align="right">0.3890</td>
-<td align="right">24</td>
-<td align="right">0.5417</td>
+<td align="left">2_Generalization</td>
+<td align="right">7.111</td>
+<td align="right">6.538</td>
+<td align="right">6.045</td>
+<td align="right">5.302</td>
+<td align="right">0.6467</td>
+<td align="right">30</td>
+<td align="right">0.5000</td>
+<td align="right">112.7</td>
+<td align="right">31.35</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div id="choi-y.-j.-mou-y.-luo-y.-2018.-how-do-3-month-old-infants-attribute-preferences-to-a-human-agent-journal-of-experimental-child-psychology-172-96106." class="section level3">
 <h3>Choi, Y.-J., Mou, Y., &amp; Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.</h3>
-<pre class="r"><code>choi2018 &lt;- read.csv(file=&quot;formatted_data/csv/choi2018.csv&quot;, header=TRUE) %&gt;%
+<pre class="r"><code>choi2018 &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/choi2018.csv&quot;, header=TRUE) %&gt;%
     mutate(experiment = case_when(condition==&quot;Two-object&quot; ~&quot;Exp.1&quot;,
                                 condition==&quot;One-object&quot; ~&quot;Exp.1&quot;,
                                 condition==&quot;Hidden&quot; ~ &quot;Exp.1&quot;),
          MA_condition = case_when(condition==&quot;Two-object&quot; ~&quot;1_twoobject&quot;,
                                 condition==&quot;One-object&quot; ~&quot;1_oneobject&quot;,
                                 condition==&quot;Hidden&quot; ~ &quot;1_hidden&quot;)) %&gt;%
+  separate(age_md, into = c(&quot;age_m&quot;, &quot;age_d&quot;), sep=&quot;,&quot;) %&gt;%
+  mutate(age_m = as.numeric(age_m),
+         age_d = as.numeric(age_d)) %&gt;%
+  mutate(ageday= 30.44 * age_m + age_d) %&gt;%
   #TODO figure out what the DV was in this study, avg or individual looks?
   mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
          Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %&gt;%
@@ -723,7 +761,9 @@ choi2018_descriptives &lt;- choi2018 %&gt;%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method=&quot;pearson&quot;, use=&quot;pairwise.complete.obs&quot;),
                    n_babies = n(),
-                   prop_girls = sum(sex==&quot;F&quot;) / n_babies)</code></pre>
+                   prop_girls = sum(sex==&quot;F&quot;) / n_babies,
+                   m_age= mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])</code></pre>
 <pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
 <pre class="r"><code>knitr::kable(choi2018_descriptives, digits = 4)</code></pre>
 <table>
@@ -737,6 +777,8 @@ choi2018_descriptives &lt;- choi2018 %&gt;%
 <th align="right">r</th>
 <th align="right">n_babies</th>
 <th align="right">prop_girls</th>
+<th align="right">m_age</th>
+<th align="right">range_age</th>
 </tr>
 </thead>
 <tbody>
@@ -749,6 +791,8 @@ choi2018_descriptives &lt;- choi2018 %&gt;%
 <td align="right">0.6789</td>
 <td align="right">16</td>
 <td align="right">0.5625</td>
+<td align="right">99.06</td>
+<td align="right">45.88</td>
 </tr>
 <tr class="even">
 <td align="left">1_oneobject</td>
@@ -759,6 +803,8 @@ choi2018_descriptives &lt;- choi2018 %&gt;%
 <td align="right">0.3445</td>
 <td align="right">16</td>
 <td align="right">0.5000</td>
+<td align="right">100.80</td>
+<td align="right">51.88</td>
 </tr>
 <tr class="odd">
 <td align="left">1_twoobject</td>
@@ -769,13 +815,15 @@ choi2018_descriptives &lt;- choi2018 %&gt;%
 <td align="right">0.8360</td>
 <td align="right">16</td>
 <td align="right">0.5000</td>
+<td align="right">102.21</td>
+<td align="right">52.88</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div id="choi-y.-j.-mou-y.-luo-y.-unpublished.-ongoing-project." class="section level3">
 <h3>Choi, Y.-J., Mou, Y., &amp; Luo, Y. (unpublished). Ongoing project.</h3>
-<pre class="r"><code>choi_ongoing &lt;- read.csv(file=&quot;formatted_data/csv/choi_ongoing.csv&quot;, header=TRUE) %&gt;%
+<pre class="r"><code>choi_ongoing &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/choi_ongoing.csv&quot;, header=TRUE) %&gt;%
     mutate(experiment = case_when(condition==&quot;Equidistant&quot; ~&quot;Exp.1&quot;,
                                 condition==&quot;Near-target&quot; ~&quot;Exp.1&quot;,
                                 condition==&quot;Far-target&quot; ~ &quot;Exp.1&quot;),
@@ -863,7 +911,7 @@ choi_ongoing_descriptives &lt;- choi_ongoing %&gt;%
 </div>
 <div id="liu-s.-brooks-n.-b.-spelke-e.-s.-2019.-origins-of-the-concepts-cause-cost-and-goal-in-prereaching-infants.-proceedings-of-the-national-academy-of-sciences-of-the-united-states-of-america-11636-1774717752." class="section level3">
 <h3>Liu, S., Brooks, N. B., &amp; Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.</h3>
-<pre class="r"><code>liu2019 &lt;- read.csv(file=&quot;formatted_data/csv/skerry2013_liu2019.csv&quot;) %&gt;%
+<pre class="r"><code>liu2019 &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/skerry2013_liu2019.csv&quot;) %&gt;%
   filter(paper==&quot;LBS&quot;)%&gt;%
   mutate(MA_condition=case_when(experiment== &quot;Exp.1&quot; ~ &quot;1_pickupglove&quot;,
                                 experiment== &quot;Exp.2&quot; ~ &quot;2_pickupbarehand&quot;,
@@ -994,7 +1042,7 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 </div>
 <div id="liu-s.-woo.-b.-m.-spelke-e.-s.-unpublished.-three-month-olds-understanding-of-object-directed-actions-that-cause-state-changes." class="section level3">
 <h3>Liu, S., Woo., B. M., &amp; Spelke, E. S. (unpublished). Three-month-olds’ understanding of object-directed actions that cause state changes.</h3>
-<pre class="r"><code>liu_unpublished &lt;- read.csv(file=&quot;formatted_data/csv/liu_unpublished.csv&quot;) %&gt;%
+<pre class="r"><code>liu_unpublished &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/liu_unpublished.csv&quot;) %&gt;%
   filter(trialtype==&quot;test&quot; &amp; is.na(msg)) %&gt;%
   dplyr::select(subj, sex, agedays, duration.datavyu, testtrial, trialn) %&gt;%
   mutate(MA_condition=&quot;1_statechange_objectswap&quot;) %&gt;%
