@@ -934,10 +934,26 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method=&quot;pearson&quot;, use=&quot;pairwise.complete.obs&quot;),
                    n_babies = n(),
-                   prop_girls = sum(sex==&quot;f&quot;) / n_babies)</code></pre>
+                   prop_girls = sum(sex==&quot;f&quot;) / n_babies,
+                   m_age = mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])</code></pre>
 <pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
 <pre class="r"><code>knitr::kable(liu2019_descriptives, digits = 4)</code></pre>
 <table>
+<colgroup>
+<col width="20%"></col>
+<col width="8%"></col>
+<col width="8%"></col>
+<col width="6%"></col>
+<col width="6%"></col>
+<col width="5%"></col>
+<col width="6%"></col>
+<col width="6%"></col>
+<col width="8%"></col>
+<col width="9%"></col>
+<col width="5%"></col>
+<col width="8%"></col>
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">MA_condition</th>
@@ -950,6 +966,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <th align="right">r</th>
 <th align="right">n_babies</th>
 <th align="right">prop_girls</th>
+<th align="right">m_age</th>
+<th align="right">range_age</th>
 </tr>
 </thead>
 <tbody>
@@ -964,6 +982,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.7786</td>
 <td align="right">20</td>
 <td align="right">0.5500</td>
+<td align="right">107.9</td>
+<td align="right">30</td>
 </tr>
 <tr class="even">
 <td align="left">2_pickupbarehand</td>
@@ -976,6 +996,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.7710</td>
 <td align="right">20</td>
 <td align="right">0.6000</td>
+<td align="right">108.0</td>
+<td align="right">27</td>
 </tr>
 <tr class="odd">
 <td align="left">3_statechangebarrier</td>
@@ -988,6 +1010,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.7261</td>
 <td align="right">20</td>
 <td align="right">0.6000</td>
+<td align="right">107.1</td>
+<td align="right">31</td>
 </tr>
 <tr class="even">
 <td align="left">3_statechangenobarrier</td>
@@ -1000,6 +1024,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.6352</td>
 <td align="right">20</td>
 <td align="right">0.5500</td>
+<td align="right">108.2</td>
+<td align="right">31</td>
 </tr>
 <tr class="odd">
 <td align="left">4_statechangenotcausal</td>
@@ -1012,6 +1038,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.4459</td>
 <td align="right">20</td>
 <td align="right">0.6000</td>
+<td align="right">106.7</td>
+<td align="right">28</td>
 </tr>
 <tr class="even">
 <td align="left">5_statechangecausal</td>
@@ -1024,6 +1052,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.6898</td>
 <td align="right">26</td>
 <td align="right">0.4615</td>
+<td align="right">105.2</td>
+<td align="right">29</td>
 </tr>
 <tr class="odd">
 <td align="left">5_statechangenotcausal</td>
@@ -1036,6 +1066,8 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 <td align="right">0.6623</td>
 <td align="right">26</td>
 <td align="right">0.3462</td>
+<td align="right">109.1</td>
+<td align="right">27</td>
 </tr>
 </tbody>
 </table>
