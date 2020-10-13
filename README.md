@@ -23,7 +23,7 @@
 ### October 15, 2020 - deadline to submit to MetaLab
 1. Read all resources, and go through [tutorials](http://metalab.stanford.edu/tutorials.html) on Metalab
 2. Set up our own submission materials based on templates (**by September 25**) (**DONE**)
-3. Follow MetaLab workflow - define research question, do a literature search etc (**by October 7**)
+3. Follow MetaLab workflow - define research question, do a literature search etc (**by October 7**) (**DONE**)
 4. Generate final MA data (including codebook, PRISMA, meta-data) (**by October 12**)
 5. Double check everything, submit on October 15
 
