@@ -81,7 +81,9 @@ skerry2013_descriptives <- skerry2013 %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
-                   prop_girls = sum(sex=="f") / n_babies)
+                   prop_girls = sum(sex=="f") / n_babies,
+                  m_age = mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])
 
 knitr::kable(skerry2013_descriptives, digits = 4)
 ```
