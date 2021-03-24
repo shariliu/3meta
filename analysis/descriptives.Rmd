@@ -39,7 +39,8 @@ luo2011 <- read.csv(file = "formatted_data/csv_and_codebook/luo2011.csv", header
   mutate(age_m = as.numeric(age_m),
          age_d = as.numeric(age_d)) %>%
   mutate(ageday= 30.44 * age_m + age_d) %>%
-  mutate(exp_look = old.goal, unexp_look = new.goal)
+  mutate(exp_look = old.goal, unexp_look = new.goal) %>%
+  rename(sex=gender)
 
 luo2011_descriptives <- luo2011 %>% 
   group_by(MA_condition) %>%
@@ -49,7 +50,7 @@ luo2011_descriptives <- luo2011 %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
-                   prop_girls = sum(gender=="F") / n_babies,
+                   prop_girls = sum(sex=="F") / n_babies,
                    m_age= mean(ageday),
                    range_age = range(ageday)[2] - range(ageday)[1])
 
@@ -68,7 +69,7 @@ skerry2013 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.
                                 experiment== "SCS.Exp.5" & hab == "unconstrained" ~ "5_unconstrainedactionhabituation"
                                 )
          ) %>%
-    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff)
+    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff) 
 
 
 skerry2013_descriptives <- skerry2013 %>% 
@@ -100,7 +101,9 @@ gerson2014a <- read.csv(file="formatted_data/csv_and_codebook/gerson2014a_ibd.cs
                                 Condition=="Control" ~ "1_Control"),
          unexp_look = NewGoal_Avg,
          exp_look = OldGoal_Avg
-         )
+         ) %>%
+  rename(sex=Sex)%>%
+  mutate(ageday=Age*30.44)
 
 gerson2014a_descriptives <- gerson2014a %>%
   group_by(MA_condition) %>%
@@ -110,9 +113,9 @@ gerson2014a_descriptives <- gerson2014a %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
-                   prop_girls = sum(Sex=="Female") / n_babies,
-                    m_age= mean(Age*30.44),
-                   range_age = range(Age*30.44)[2] - range(Age*30.44)[1])
+                   prop_girls = sum(sex=="Female") / n_babies,
+                    m_age= mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])
 
 knitr::kable(gerson2014a_descriptives, digits = 4)
 ```
@@ -129,7 +132,9 @@ gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv
                                 Condition=="gen" ~ "2_Generalization"),
          unexp_look = NewGoal_Avg,
          exp_look = OldGoal_Avg
-         )
+         ) %>%
+  rename(sex=Sex)%>%
+  mutate(ageday=Age_m*30.44)
 
 gerson2014b_descriptives <- gerson2014b %>%
   group_by(MA_condition) %>%
@@ -139,9 +144,9 @@ gerson2014b_descriptives <- gerson2014b %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
-                   prop_girls = sum(Sex=="f") / n_babies,
-                   m_age= mean(Age_m*30.44),
-                   range_age = range(Age_m*30.44)[2] - range(Age_m*30.44)[1])
+                   prop_girls = sum(sex=="f") / n_babies,
+                   m_age= mean(ageday),
+                   range_age = range(ageday)[2] - range(ageday)[1])
 
 knitr::kable(gerson2014b_descriptives, digits = 4)
 ```
@@ -263,7 +268,11 @@ woo_unpublished_study1 <- read.csv(file="formatted_data/csv_and_codebook/liu_unp
   group_by(subj, sex, agedays, MA_condition, testtrial) %>%
   dplyr::summarize(avg.look = mean(duration.datavyu, na.rm=TRUE)) %>%
   spread(testtrial,avg.look) %>%
-  mutate(exp_look = old.goal, unexp_look = new.goal)
+  mutate(exp_look = old.goal,
+         unexp_look = new.goal,
+         experiment="Exp.1")%>%
+  rename(ageday=agedays) %>%
+  ungroup()
 
 woo_unpublished_study1_descriptives <- woo_unpublished_study1 %>% 
   group_by(MA_condition) %>%
@@ -274,8 +283,8 @@ woo_unpublished_study1_descriptives <- woo_unpublished_study1 %>%
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
                    prop_girls = sum(sex=="f") / n_babies,
-                   m_age = mean(agedays),
-                  range_age = range(agedays)[2] - range(agedays)[1])
+                   m_age = mean(ageday),
+                  range_age = range(ageday)[2] - range(ageday)[1])
 knitr::kable(woo_unpublished_study1_descriptives, digits = 4)
 ```
 
@@ -291,7 +300,10 @@ woo_unpublished_study2 <- read.csv(file="formatted_data/csv_and_codebook/woo_unp
   group_by(Subject.ID, Sex, ageday, MA_condition, Type) %>%
   dplyr::summarize(avg.look = mean(LT, na.rm=TRUE)) %>%
   spread(Type, avg.look) %>%
-  mutate(exp_look = Different_Location, unexp_look = Different_Object)
+  mutate(exp_look = Different_Location, unexp_look = Different_Object,
+                  experiment="Exp.2") %>%
+  rename(sex = Sex) %>%
+  ungroup()
 
 woo_unpublished_study2_descriptives <- woo_unpublished_study2 %>% 
   group_by(MA_condition) %>%
@@ -301,9 +313,43 @@ woo_unpublished_study2_descriptives <- woo_unpublished_study2 %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
-                   prop_girls = sum(Sex=="F") / n_babies,
+                   prop_girls = sum(sex=="F") / n_babies,
                    m_age = mean(ageday),
                   range_age = range(ageday)[2] - range(ageday)[1])
 knitr::kable(woo_unpublished_study2_descriptives, digits = 4)
+```
+
+### Generate one dataset
+
+```{r}
+strip.cols <- function(x) {
+  stripped.cols <- x %>%
+    dplyr::select(MA_condition,ageday,exp_look,unexp_look,sex) %>%
+  as.data.frame()
+  
+  stripped.cols$paper <- deparse(substitute(x))
+  # stripped.cols$paper <- as.character(x)
+  write.table(stripped.cols,
+              file="newfile.csv",
+              col.names=F,
+              append=T,
+              sep=",")
+  return(stripped.cols)
+}
+
+result <- list(luo2011,
+               skerry2013,
+               gerson2014a,
+               gerson2014b,
+               choi_ongoing,
+               choi2018,
+               liu2019,
+               woo_unpublished_study1,
+               woo_unpublished_study2) %>%
+  lapply(strip.cols)
+
+fulldata <- read.csv("newfile.csv",header=FALSE)
+colnames(fulldata) <- c("subjID", "condition", "ageday", "exp_look", "unexp_look", "sex")
+
 ```
 

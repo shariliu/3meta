@@ -1088,9 +1088,11 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 </tbody>
 </table>
 </div>
-<div id="liu-s.-woo.-b.-m.-spelke-e.-s.-unpublished.-three-month-olds-understanding-of-object-directed-actions-that-cause-state-changes." class="section level3">
-<h3>Liu, S., Woo., B. M., &amp; Spelke, E. S. (unpublished). Three-month-olds’ understanding of object-directed actions that cause state changes.</h3>
-<pre class="r"><code>liu_unpublished &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/liu_unpublished.csv&quot;) %&gt;%
+<div id="woo-b.-liu-s.-spelke-e.-s.-unpublished.-three-month-olds-understanding-of-object-identity-vs-location-as-the-goals-of-other-peoples-reaches." class="section level3">
+<h3>Woo, B., Liu, S., &amp; Spelke, E. S. (unpublished). Three-month-olds’ understanding of object identity vs location as the goals of other people’s reaches.</h3>
+<div id="study-1" class="section level4">
+<h4>Study 1</h4>
+<pre class="r"><code>woo_unpublished_study1 &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/liu_unpublished.csv&quot;) %&gt;%
   filter(trialtype==&quot;test&quot; &amp; is.na(msg)) %&gt;%
   dplyr::select(subj, sex, agedays, duration.datavyu, testtrial, trialn) %&gt;%
   mutate(MA_condition=&quot;1_statechange_objectswap&quot;) %&gt;%
@@ -1101,7 +1103,7 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
   spread(testtrial,avg.look) %&gt;%
   mutate(exp_look = old.goal, unexp_look = new.goal)</code></pre>
 <pre><code># `summarise()` regrouping output by &#39;subj&#39;, &#39;sex&#39;, &#39;agedays&#39;, &#39;MA_condition&#39; (override with `.groups` argument)</code></pre>
-<pre class="r"><code>liu_unpublished_descriptives &lt;- liu_unpublished %&gt;% 
+<pre class="r"><code>woo_unpublished_study1_descriptives &lt;- woo_unpublished_study1 %&gt;% 
   group_by(MA_condition) %&gt;%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
@@ -1113,7 +1115,7 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
                    m_age = mean(agedays),
                   range_age = range(agedays)[2] - range(agedays)[1])</code></pre>
 <pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
-<pre class="r"><code>knitr::kable(liu_unpublished_descriptives, digits = 4)</code></pre>
+<pre class="r"><code>knitr::kable(woo_unpublished_study1_descriptives, digits = 4)</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -1144,6 +1146,64 @@ liu2019_descriptives &lt;- liu2019 %&gt;%
 </tr>
 </tbody>
 </table>
+</div>
+<div id="study-2" class="section level4">
+<h4>Study 2</h4>
+<pre class="r"><code>woo_unpublished_study2 &lt;- read.csv(file=&quot;formatted_data/csv_and_codebook/woo_unpublished_study2.csv&quot;) %&gt;%
+  dplyr::select(Subject.ID, Sex, Age.Month, Age.Day, LT, Type, Trial.N) %&gt;%
+  mutate(MA_condition=&quot;2_disambiguatingobjectgoal&quot;) %&gt;%
+  mutate(Subject.ID = as.factor(Subject.ID),
+         Type = as.factor(Type),
+         ageday= 30.44 * Age.Month + Age.Day) %&gt;%
+  group_by(Subject.ID, Sex, ageday, MA_condition, Type) %&gt;%
+  dplyr::summarize(avg.look = mean(LT, na.rm=TRUE)) %&gt;%
+  spread(Type, avg.look) %&gt;%
+  mutate(exp_look = Different_Location, unexp_look = Different_Object)</code></pre>
+<pre><code># `summarise()` regrouping output by &#39;Subject.ID&#39;, &#39;Sex&#39;, &#39;ageday&#39;, &#39;MA_condition&#39; (override with `.groups` argument)</code></pre>
+<pre class="r"><code>woo_unpublished_study2_descriptives &lt;- woo_unpublished_study2 %&gt;% 
+  group_by(MA_condition) %&gt;%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method=&quot;pearson&quot;, use=&quot;pairwise.complete.obs&quot;),
+                   n_babies = n(),
+                   prop_girls = sum(Sex==&quot;F&quot;) / n_babies,
+                   m_age = mean(ageday),
+                  range_age = range(ageday)[2] - range(ageday)[1])</code></pre>
+<pre><code># `summarise()` ungrouping output (override with `.groups` argument)</code></pre>
+<pre class="r"><code>knitr::kable(woo_unpublished_study2_descriptives, digits = 4)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">MA_condition</th>
+<th align="right">x_1</th>
+<th align="right">x_2</th>
+<th align="right">sd_1</th>
+<th align="right">sd_2</th>
+<th align="right">r</th>
+<th align="right">n_babies</th>
+<th align="right">prop_girls</th>
+<th align="right">m_age</th>
+<th align="right">range_age</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2_disambiguatingobjectgoal</td>
+<td align="right">13.15</td>
+<td align="right">9.354</td>
+<td align="right">13.3</td>
+<td align="right">9.497</td>
+<td align="right">0.8167</td>
+<td align="right">24</td>
+<td align="right">0.375</td>
+<td align="right">104.1</td>
+<td align="right">30.44</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 
 
