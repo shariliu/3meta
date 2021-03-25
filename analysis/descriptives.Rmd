@@ -322,34 +322,28 @@ knitr::kable(woo_unpublished_study2_descriptives, digits = 4)
 ### Generate one dataset
 
 ```{r}
-strip.cols <- function(x) {
-  stripped.cols <- x %>%
-    dplyr::select(MA_condition,ageday,exp_look,unexp_look,sex) %>%
-  as.data.frame()
-  
-  stripped.cols$paper <- deparse(substitute(x))
-  # stripped.cols$paper <- as.character(x)
-  write.table(stripped.cols,
-              file="newfile.csv",
-              col.names=F,
-              append=T,
-              sep=",")
-  return(stripped.cols)
-}
-
-result <- list(luo2011,
-               skerry2013,
-               gerson2014a,
-               gerson2014b,
-               choi_ongoing,
-               choi2018,
-               liu2019,
-               woo_unpublished_study1,
-               woo_unpublished_study2) %>%
-  lapply(strip.cols)
-
-fulldata <- read.csv("newfile.csv",header=FALSE)
-colnames(fulldata) <- c("subjID", "condition", "ageday", "exp_look", "unexp_look", "sex")
-
+# strip.cols <- function(x) {
+#   stripped.cols <- x %>%
+#     dplyr::select(MA_condition,ageday,exp_look,unexp_look,sex) %>%
+#   as.data.frame()
+#   stripped.cols$paper <- deparse(substitute(x))
+#   write.table(stripped.cols,
+#               file="individual_data.csv",
+#               col.names=F,
+#               append=T,
+#               sep=",")
+# }
+# 
+# 
+# result <- list(luo2011,
+#                skerry2013,
+#                gerson2014a,
+#                gerson2014b,
+#                choi_ongoing,
+#                choi2018,
+#                liu2019,
+#                woo_unpublished_study1,
+#                woo_unpublished_study2) %>%
+#   lapply(strip.cols)
 ```
 

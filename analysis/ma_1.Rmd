@@ -1,0 +1,172 @@
+---
+title: "Meta-analysis 1"
+author: "Shari Liu"
+date: "3/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+options(scipen = 999, digits = 4)
+knitr::opts_chunk$set(comment = "#")
+
+## load required packages
+ipak <- function (pkg) {
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr")
+
+ipak(packages)
+```
+
+```{r import.data}
+
+ind.data.pre <- read.csv("./individual_data.csv") %>%
+  mutate(experiment=str_sub(condition,1,1)) %>%
+  mutate_if(is.character,as.factor)
+
+
+ma.data <- read.csv("./ma_data.csv") %>%
+  rename(paper = study_ID,
+         condition = expt_condition,
+         experiment = expt_num,
+         task = looking_task) %>%
+    mutate_if(is.character,as.factor)
+
+
+study.design <- ma.data %>%
+  select(paper, experiment, condition, task, training_yesno, action_consequence, actor_hand, agent_efficient_fam, object_diff_size_huge, action_causal, action_consequence, location_object_goal_ambiguous, bothobjects_present_visible_fam, agent, PI_group) %>%
+    mutate_if(is.character,as.factor) %>%
+  mutate(experiment = as.factor(experiment)) %>%
+  filter(paper != "sommerville2005",
+         task != "causes")
+
+
+# merge study design with individual looks from babies
+
+ind.data <- left_join(ind.data.pre, study.design, 
+                      by=c("paper", "condition", "experiment")) %>%
+  mutate(sex = tolower(str_sub(sex,1,1)),
+         look_pref = unexp_look - exp_look) %>%
+  mutate_if(is.character,as.factor)
+str(ind.data)
+View(ind.data)
+```
+
+```{r plots.looks}
+
+ggplot(ind.data %>%
+         rename(expected = exp_look,
+                unexpected = unexp_look) %>%
+         pivot_longer(cols = c(expected, unexpected),
+                      names_to = "trial_type",
+                      values_to = "looking_time"),
+       aes(trial_type, looking_time, colour=paper))+
+  theme_cowplot(12)+
+  theme(legend.title = element_blank())+
+  geom_boxplot(outlier.alpha = 0.2)+
+  geom_point(alpha=0.2)+
+  geom_line(aes(group=subj), alpha=0.2)+
+  stat_summary(geom="point", fun="mean", colour="black")+
+  stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
+  ylab("Looking Time (s)")+
+  facet_grid(~task+paper+condition)+
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2))
+  
+```
+
+
+```{r plots.lookdiffs}
+
+(plot1 <- ggplot(ind.data,
+                 aes(condition, look_pref, colour=paper)) +
+  geom_boxplot(outlier.alpha = 0.2, position = position_dodge2(preserve = "single"))+
+  geom_hline(yintercept = 0)+
+  geom_point(alpha=0.2)+
+  stat_summary(geom="point", fun="mean", colour="black")+
+  stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
+  theme_cowplot(12)+
+  facet_grid(~task+paper,scales = "free_x",space = "free")+
+  ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2)))
+
+```
+
+
+```{r plot.ageeffects}
+
+(plot3 <- ggplot(ind.data,
+                 aes(ageday, look_pref, colour=paper)) +
+  # geom_boxplot(outlier.alpha = 0.2, position = position_dodge2(preserve = "single"))+
+  geom_hline(yintercept = 0)+
+  geom_point()+
+  geom_smooth(method="lm")+
+  # stat_summary(geom="point", fun="mean", colour="black")+
+  # stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
+  theme_cowplot(12)+
+  facet_grid(~task+paper+condition,scales = "free_x",space = "free")+
+  ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2)))
+
+```
+
+## Constraints Task
+### Basline Effect
+```{r}
+constraints <- ind.data %>% filter(task =="efficiency")
+constraints.baseline <- constraints %>%
+  filter(condition %in% c("3_notraining",
+                          "1_pickupglove",
+                          "2_pickupbarehand"))
+  
+constraints.b1 <- lmer(data = constraints.baseline,
+                       formula = look_pref ~ 1 + ageday + (1+condition|experiment) + (1+experiment|paper))
+summary(constraints.b1)
+confint(constraints.b1)
+```
+
+### Intervention Analysis
+```{r analysis}
+
+constraints.m1 <- lmer(data = constraints,
+     formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
+     REML=FALSE)
+
+summary(constraints.m1)
+plot(allEffects(constraints.m1))
+
+```
+
+
+## Goals Task
+### Baseline Effect
+
+```{r}
+goals <- ind.data %>% filter(task =="goals")
+goals.baseline <- goals %>%
+  filter(condition %in% c("1_Control",
+                          "1_twoobject") &
+           paper %in% c("gerson2014a",
+                        "luo2011"))
+  
+goals.b1 <- lmer(data = goals.baseline,
+                       formula = look_pref ~ 1 + ageday + (1|condition) + (1|paper))
+
+summary(goals.b1)
+plot(allEffects(goals.b1))
+confint(goals.b1)
+```
+
+### Intervention Analysis
+```{r}
+goals.m1 <- lmer(data = goals,
+     formula = look_pref ~ training_yesno + object_diff_size_huge + action_causal + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1+condition|experiment) + (1+experiment|paper) + (1+paper|PI_group),
+     REML=FALSE)
+
+summary(goals.m1)
+plot(allEffects(goals.m1))
+```
+
