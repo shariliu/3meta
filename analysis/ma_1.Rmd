@@ -17,9 +17,11 @@ ipak <- function (pkg) {
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr")
+packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr", "ggResidpanel", "HLMdiag")
 
 ipak(packages)
+
+options(contrasts = c("contr.treatment", "contr.poly")) 
 ```
 
 ```{r import.data}
@@ -56,6 +58,12 @@ str(ind.data)
 View(ind.data)
 ```
 
+```{r}
+levels(ind.data$actor_hand)
+```
+
+# Plots
+
 ```{r plots.looks}
 
 ggplot(ind.data %>%
@@ -73,7 +81,7 @@ ggplot(ind.data %>%
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   ylab("Looking Time (s)")+
-  facet_grid(~task+paper+condition)+
+  facet_grid(~task+paper+condition, labeller=label_wrap_gen())+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2))
   
 ```
@@ -89,7 +97,7 @@ ggplot(ind.data %>%
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   theme_cowplot(12)+
-  facet_grid(~task+paper,scales = "free_x",space = "free")+
+  facet_grid(~task+paper,scales = "free_x",space = "free", labeller=label_wrap_gen())+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2)))
 
@@ -107,26 +115,111 @@ ggplot(ind.data %>%
   # stat_summary(geom="point", fun="mean", colour="black")+
   # stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   theme_cowplot(12)+
-  facet_grid(~task+paper+condition,scales = "free_x",space = "free")+
+  facet_grid(~task+paper)+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2)))
 
 ```
 
+```{r helper.functions}
+# function that returns column of standardized betas from lmer model
+gen.beta <- function(model) {
+    df <- data.frame(fixef(model))
+    names(df) <- c("beta")
+    return(df)
+}
+# function that computes CIs and returns them in df
+gen.ci <- function(model) {
+  df <- data.frame(confint(model))
+  names(df) <- c("lower", "upper")
+  return(df)
+}
+# function that converts model summary (lmer) to df
+gen.m <- function(model) {
+  df <- data.frame(coef(summary(model)))
+  names(df) <- c("b", "se", "df", "t", "p")
+  return(df)
+}
+# function that converts model summary (lm) to df
+gen.lm <- function(model) {
+  df <- data.frame(coef(summary(model)))
+  names(df) <- c("b", "se", "t", "p")
+  return(df)
+}
+# function that returns age info and number of females in a dataset
+ages <- function(longdata) {
+  longdata %>% summarize(mean = mean(ageday), min=range(ageday)[1], max=range(ageday)[2], f=sum(sex=="f")/2)
+}
+# function that returns formatted result from lme4/lmerTest table
+report <- function(table, index, places, tails, flip) {
+  if (tails == "1") {
+    p <- round(table$p[index], places)/2
+    howmanytails <- "one-tailed"
+  } else {
+    p <- round(table$p[index], places)
+    howmanytails <- "two-tailed"
+  }
+  if (p < .001) {
+    p <- "<.001"
+  } else {
+    p <- paste("=", round(p, places), sep = "")
+  }
+  if (missing(flip)) {
+    result <- paste("[", round(table$lower[index], places), ",", round(table$upper[index], places), "], ß=", round(table$beta[index], places), ", B=", round(table$b[index],places), ", SE=", round(table$se[index],places), ", p", p, ", ", howmanytails, sep = "")
+  } else {
+    result <- paste("[", -round(table$upper[index], places), ",", -round(table$lower[index], places), "], ß=", -round(table$beta[index], places), ", B=", -round(table$b[index],places), ", SE=", round(table$se[index],places), ", p", p, ", ", howmanytails, sep = "")
+  }
+  return(result)
+}
+
+describe <- function(dataset){
+  summary <- dataset %>%
+  summarise(unexp_avg = mean(unexp_look),
+            exp_avg = mean(exp_look),
+            lookdiff_avg = mean(look_pref),
+            n = n())
+  paste(
+        #"M_unexp = ", summary$unexp_avg, "s ",
+        #"M_exp = ", summary$exp_avg, "s ",
+        "Mean_diff = ", round(summary$lookdiff_avg,3), "seconds"
+  )
+}
+```
+
 ## Constraints Task
-### Basline Effect
-```{r}
+### Baseline Effect
+```{r constraints.stats.baseline}
 constraints <- ind.data %>% filter(task =="efficiency")
-constraints.baseline <- constraints %>%
+constraints.baseline.data <- constraints %>%
   filter(condition %in% c("3_notraining",
                           "1_pickupglove",
                           "2_pickupbarehand"))
   
-constraints.b1 <- lmer(data = constraints.baseline,
-                       formula = look_pref ~ 1 + ageday + (1+condition|experiment) + (1+experiment|paper))
+constraints.b1 <- lmer(data = constraints.baseline.data,
+                       formula = look_pref ~ 1 + ageday + (1|condition))
 summary(constraints.b1)
 confint(constraints.b1)
+
+constraints.b1.table <- sjPlot:: tab_model(constraints.b1,
+                                           show.std	=TRUE,
+                                           show.stat=TRUE,
+                                           show.df=TRUE)
+
+constraints.b1.beta <- summary(effectsize::standardize(constraints.b1))
+
+constraints.baseline <- cbind(
+  gen.beta(effectsize::standardize(constraints.b1)),
+  gen.m(constraints.b1),
+  gen.ci(constraints.b1)[3:4,]
+) 
+
+constraints.baseline
+
+cooks1 <- cooks.distance(constraints.b1, group = "subj")
+dotplot_diag(x = cooks1, cutoff = "internal", name = "cooks.distance") + ylab("Cook's distance") + xlab("ID")
 ```
+
+For standard versions of the constraints task, we found no differential looking between the expected and unexpected events, `r describe(constraints.baseline.data)`, `r report(constraints.baseline,2,3,2)`.
 
 ### Intervention Analysis
 ```{r analysis}
@@ -136,8 +229,20 @@ constraints.m1 <- lmer(data = constraints,
      REML=FALSE)
 
 summary(constraints.m1)
-plot(allEffects(constraints.m1))
 
+resid_panel(constraints.m1, plots = "all",
+                          smoother = TRUE,
+                          qqbands = TRUE)
+cooks1 <- cooks.distance(constraints.m1, group = "subj")
+dotplot_diag(x = cooks1, cutoff = "internal", name = "cooks.distance") + ylab("Cook's distance") + xlab("ID")
+
+sjPlot::plot_model(constraints.m1,
+                   type = "est",
+                   colors = "bw",
+                   sort.est=TRUE,
+                   axis.title=c("Effect (Unexpected - Expected in seconds)"),
+                   show.values=TRUE,
+                   show.p=TRUE)
 ```
 
 
@@ -145,6 +250,7 @@ plot(allEffects(constraints.m1))
 ### Baseline Effect
 
 ```{r}
+
 goals <- ind.data %>% filter(task =="goals")
 goals.baseline <- goals %>%
   filter(condition %in% c("1_Control",
@@ -153,10 +259,9 @@ goals.baseline <- goals %>%
                         "luo2011"))
   
 goals.b1 <- lmer(data = goals.baseline,
-                       formula = look_pref ~ 1 + ageday + (1|condition) + (1|paper))
+                       formula = look_pref ~ 1 + ageday + (1|condition))
 
 summary(goals.b1)
-plot(allEffects(goals.b1))
 confint(goals.b1)
 ```
 
@@ -167,6 +272,14 @@ goals.m1 <- lmer(data = goals,
      REML=FALSE)
 
 summary(goals.m1)
+sjPlot::plot_model(goals.m1,
+                   type = "est",
+                   colors = "bw",
+                   sort.est=TRUE,
+                   axis.title=c("Effect (Unexpected - Expected in seconds)"),
+                   show.values=TRUE,
+                   show.p=TRUE)
+sjPlot:: tab_model(goals.m1)
 plot(allEffects(goals.m1))
 ```
 
