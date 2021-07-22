@@ -10,6 +10,7 @@ options(scipen = 999, digits = 4)
 knitr::opts_chunk$set(comment = "#")
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
+
 options(repos = r)
 
 ## load required packages
@@ -299,12 +300,13 @@ plot1 <- ggplot(ind.data.long,
   facet_grid(~task+paper+condition, labeller=label_wrap_gen())+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2))
   
+plot1
 ```
 
 
 ```{r plots.lookdiffs}
 
-plot2 <- ggplot(ind.data,
+plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
                  aes(condition, look_pref, colour=paper)) +
   geom_boxplot(outlier.alpha = 0.2, position = position_dodge2(preserve = "single"))+
   geom_hline(yintercept = 0)+
@@ -312,11 +314,27 @@ plot2 <- ggplot(ind.data,
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   theme_cowplot(12)+
-  facet_grid(~task+paper,scales = "free_x",space = "free")+
+  facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
-  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2))
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2, legend.position = "none"))
 
-plot2
+plot2.constraints <- ggplot(ind.data %>% filter(task == "efficiency"),
+                 aes(condition, look_pref, colour=paper)) +
+  geom_boxplot(outlier.alpha = 0.2, position = position_dodge2(preserve = "single"))+
+  geom_hline(yintercept = 0)+
+  geom_point(alpha=0.2)+
+  stat_summary(geom="point", fun="mean", colour="black")+
+  stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
+  theme_cowplot(12)+
+  facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
+  ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2, legend.position = "none"))
+
+plot2.goals
+
+plot2.constraints 
+
+(plot2.goals | plot2.constraints)
 
 ```
 
