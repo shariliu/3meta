@@ -297,6 +297,7 @@ plot1 <- ggplot(ind.data.long,
   # geom_errorbar(data = ind.data.summary, colour="red", position = position_dodge(width = 5), width = 0, aes(ymin=looking_time-se, ymax=looking_time+se)) +
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   ylab("Looking Time (s)")+
+  xlab("Condition")+
   facet_grid(~task+paper+condition, labeller=label_wrap_gen())+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2))
   
@@ -316,7 +317,7 @@ plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
   theme_cowplot(12)+
   facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
-  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2, legend.position = "none"))
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")
 
 plot2.constraints <- ggplot(ind.data %>% filter(task == "efficiency"),
                  aes(condition, look_pref, colour=paper)) +
@@ -327,14 +328,15 @@ plot2.constraints <- ggplot(ind.data %>% filter(task == "efficiency"),
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   theme_cowplot(12)+
   facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
-  ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
-  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2, legend.position = "none"))
+  ylab("")+
+  xlab("")+
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")
 
 plot2.goals
 
 plot2.constraints 
 
-(plot2.goals | plot2.constraints)
+(plot2.goals | plot2.constraints) + plot_layout(widths = c(2, 1)) + plot_annotation(tag_levels = 'A')
 
 ```
 
