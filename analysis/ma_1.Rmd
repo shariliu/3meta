@@ -2,10 +2,12 @@
 title: "Meta-analysis 1"
 author: "Shari Liu"
 date: "3/24/2021"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
-```{r setup, include=FALSE}
+```{r setup, message = FALSE}
 options(scipen = 999, digits = 4)
 knitr::opts_chunk$set(comment = "#")
 r = getOption("repos")
@@ -21,11 +23,14 @@ ipak <- function (pkg) {
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr", "ggResidpanel", "HLMdiag", "mixed")
+packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr", "ggResidpanel", "HLMdiag", "mixed", "sjPlot")
 
 ipak(packages)
 
+# set summed contrasts
 options(contrasts = c("contr.sum", "contr.poly")) 
+
+# fix bs with dplyr 
 detach("package:dplyr", unload = TRUE)
 library("dplyr")
 
@@ -36,16 +41,16 @@ library("dplyr")
 ind.data.pre <- read.csv("./individual_data.csv") %>%
   mutate(experiment=str_sub(condition,1,1)) %>%
   mutate_if(is.character,as.factor) %>%
-  mutate(subj = as.factor(subj))
-
+  mutate(subj = as.factor(subj))%>%
+  mutate_at(.vars="condition", .funs = tolower)
 
 ma.data <- read.csv("./ma_data.csv") %>%
   rename(paper = study_ID,
          condition = expt_condition,
          experiment = expt_num,
          task = looking_task) %>%
-    mutate_if(is.character,as.factor)
-
+    mutate_if(is.character,as.factor) %>%
+  mutate_at(.vars="condition", .funs = tolower)
 
 study.design <- ma.data %>%
   select(paper, experiment, condition, task, training_yesno, action_consequence, actor_hand, agent_efficient_fam, object_diff_size_huge, action_causal, action_consequence, location_object_goal_ambiguous, bothobjects_present_visible_fam, agent, PI_group) %>%
@@ -61,11 +66,13 @@ ind.data <- left_join(ind.data.pre, study.design,
                       by=c("paper", "experiment", "condition")) %>%
   mutate(sex = tolower(str_sub(sex,1,1)),
          look_pref = unexp_look - exp_look) %>%
-  mutate_if(is.character,as.factor)
+  mutate(paper = str_replace_all(paper, "unpublished", "unpub")) %>%
+  mutate(task = str_replace_all(task, "efficiency", "constraints")) %>%
+  mutate_if(is.character,as.factor) 
+
 str(ind.data)
 # View(ind.data)
 ```
-
 
 ```{r helper.functions}
 # function that returns column of standardized betas from lmer model
@@ -74,28 +81,33 @@ gen.beta <- function(model) {
     names(df) <- c("beta")
     return(df)
 }
+
 # function that computes CIs and returns them in df
 gen.ci <- function(model) {
   df <- data.frame(confint(model))
   names(df) <- c("lower", "upper")
   return(df)
 }
+
 # function that converts model summary (lmer) to df
 gen.m <- function(model) {
   df <- data.frame(coef(summary(model)))
   names(df) <- c("b", "se", "df", "t", "p")
   return(df)
 }
+
 # function that converts model summary (lm) to df
 gen.lm <- function(model) {
   df <- data.frame(coef(summary(model)))
   names(df) <- c("b", "se", "t", "p")
   return(df)
 }
+
 # function that returns age info and number of females in a dataset
 ages <- function(longdata) {
   longdata %>% summarize(mean = mean(ageday), min=range(ageday)[1], max=range(ageday)[2], f=sum(sex=="f")/2)
 }
+
 # function that returns formatted result from lme4/lmerTest table
 report <- function(table, index, places, tails, flip) {
   if (tails == "1") {
@@ -280,6 +292,52 @@ ind.data.long <- ind.data %>%
                       values_to = "looking_time")
 
 ind.data.summary <- summarySEwithin(data = ind.data.long, measurevar = "looking_time", betweenvars = c("task", "paper", "experiment", "condition"), withinvars = "trial_type")
+
+n_infants <- ind.data.summary %>%
+  filter(trial_type == "expected") %>% # just take one row per study
+  summarise(sum(N))
+
+n_conditions <- ind.data.summary %>%
+  filter(trial_type == "expected") %>% # just take one row per study
+  nrow()
+
+n_papers <- ind.data.summary %>%
+  filter(trial_type == "expected") %>% # just take one row per study
+  group_by(paper) %>%
+  count(paper) %>%
+  nrow()
+
+```
+
+# Summary of data sources
+We searched for all journal papers, theses, and conference proceedings that reported looking time data from typically developing infants between 2 and 4 months of age in a task structured like the goals or constraints task. We also emailed two listservs (Cognitive Development Society, and Infant Studies) to request more datasets. This resulted in a final list of 11 papers and 35 conditions. We contacted the authors and asked them to send us the original datasets from this past published and unpublished work. We were able to gather original datasets from `r n_papers` papers, `r n_conditions` conditions, and `r n_infants` infants (age range `r floor(min(ind.data$ageday))`-`r floor(max(ind.data$ageday))`. A team of researchers were then randomly assigned to look through relevant papers including supplemental materials (with SL double-checking every entry and resolving disagreements). When exact values were not provided, or when we came across other ambiguities (e.g. numbers reported in the paper differ from the numbers calculated using the raw data), the team contacted authors to try and address, and also used the tool WebplotDigitizer (https://automeris.io/WebPlotDigitizer/) to extract estimated values from figures. If there were discrepancies between the paper, figures and/or raw data, we prioritized the values from the raw data if available, then author correspondence, then paper, then estimates from figures, in that order. For individual datasets, authors were asked to provide their data and a codebook, and were asked for permission to share their stimuli and data publicly on OSF. Of `r n_papers` papers (`r n_conditions`, conditions), data from 25 conditions and stimuli from 13 conditions (either actual study videos, or example stimuli) are publicly available at https://osf.io/zwncg/.
+
+```{r table.experiments}
+table.goals <- ind.data %>%
+  filter(task=="goals") %>%
+  group_by(paper, condition, training_yesno, action_causal, action_consequence, location_object_goal_ambiguous, bothobjects_present_visible_fam, agent) %>%
+  summarise(n = n(), agemin = floor(range(ageday)[1]), agemax = floor(range(ageday)[2])) %>%
+  select(paper, condition, n, agemin, agemax, training_yesno, action_causal, action_consequence, location_object_goal_ambiguous, bothobjects_present_visible_fam, agent)
+
+table.constraints <- ind.data %>%
+  filter(task=="constraints") %>%
+  group_by(paper, condition, training_yesno, action_causal, action_consequence, location_object_goal_ambiguous, agent_efficient_fam, actor_hand) %>%
+  summarise(n = n(), agemin = floor(range(ageday)[1]), agemax = floor(range(ageday)[2])) %>%
+  select(paper, condition, n, agemin, agemax, training_yesno, action_causal, action_consequence, agent_efficient_fam, actor_hand)
+
+
+knitr::kable(table.goals)
+
+knitr::kable(table.constraints)
+```
+
+```{r normal.dist.check}
+str(ind.data)
+
+ggplot(ind.data, aes(x=look_pref)) +
+  geom_histogram()+
+  facet_grid(~paper)+
+  theme_cowplot(12)
 ```
 
 # Plots
@@ -298,39 +356,42 @@ plot1 <- ggplot(ind.data.long,
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   ylab("Looking Time (s)")+
   xlab("Condition")+
-  facet_grid(~task+paper+condition, labeller=label_wrap_gen())+
-  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2))
+  facet_wrap(~task+paper+condition, nrow=4, labeller=label_wrap_gen())+
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2),
+        legend.position="bottom")
   
 plot1
 ```
 
-
 ```{r plots.lookdiffs}
 
 plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
-                 aes(condition, look_pref, colour=paper)) +
+                 aes(condition, look_pref, fill=paper)) +
   geom_boxplot(outlier.alpha = 0.2, position = position_dodge2(preserve = "single"))+
   geom_hline(yintercept = 0)+
   geom_point(alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
-  theme_cowplot(12)+
-  facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
+  theme_cowplot(18)+
+  facet_grid(~paper, scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
-  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")+
+  scale_fill_brewer(palette = "Dark2")
 
-plot2.constraints <- ggplot(ind.data %>% filter(task == "efficiency"),
-                 aes(condition, look_pref, colour=paper)) +
+plot2.constraints <- ggplot(ind.data %>% filter(task == "constraints"),
+                 aes(condition, look_pref, fill=paper)) +
   geom_boxplot(outlier.alpha = 0.2, position = position_dodge2(preserve = "single"))+
   geom_hline(yintercept = 0)+
   geom_point(alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
-  theme_cowplot(12)+
+  theme_cowplot(18)+
   facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("")+
   xlab("")+
-  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")
+  theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")+
+  scale_fill_manual(values = wes_palette("Royal2"))
+
 
 plot2.goals
 
@@ -339,7 +400,6 @@ plot2.constraints
 (plot2.goals | plot2.constraints) + plot_layout(widths = c(2, 1)) + plot_annotation(tag_levels = 'A')
 
 ```
-
 
 ```{r plot.ageeffects}
 
@@ -358,11 +418,21 @@ plot2.constraints
 
 ```
 
-
 ## Constraints Task
+```{r}
+constraints <- ind.data %>% filter(task =="constraints")
+
+constraints$actor_hand
+constraints$action_consequence <- relevel(constraints$action_consequence, ref = "none")
+constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "no")
+constraints$training_yesno <- relevel(constraints$training_yesno, ref = "no")
+constraints$action_causal <- relevel(constraints$action_causal, ref = "no")
+
+```
+
+
 ### Baseline Effect
 ```{r constraints.stats.baseline}
-constraints <- ind.data %>% filter(task =="efficiency")
 constraints.baseline.data <- constraints %>%
   filter(condition %in% c("3_notraining",
                           "1_pickupglove",
@@ -450,6 +520,20 @@ constraints.interventions <- cbind(
 
 constraints.cooks<- constraints[which(cooks1 <= 4/264),]
 
+# where are the influential observations?
+nrow(constraints)
+nrow(constraints.cooks)
+
+constraints.summary <- constraints %>%
+  group_by(paper,condition) %>%
+  summarise(n = n())
+
+constraints.cooksn <- constraints.cooks %>%
+  group_by(paper,condition) %>%
+  summarise(n_cooks = n()) 
+
+constraints.where.influential <- full_join(constraints.summary,constraints.cooksn)
+
 constraints.m1.cooks <- lmer(data = constraints.cooks,
      formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
      REML=FALSE)
@@ -463,7 +547,7 @@ plot_model(constraints.m1.cooks.beta)
 
 
 sjPlot::plot_model(constraints.m1.cooks,
-                   type = "eff",
+                   type = "pred",
                    # colors = "bw",
                    sort.est=TRUE,
                    axis.title=c("Effect (Unexpected - Expected in seconds)"),
@@ -476,6 +560,7 @@ sjPlot::plot_model(constraints.m1.cooks,
                    type = "est",
                    colors = "bw",
                    sort.est=TRUE,
+                    axis.labels= rev(c("mittened", "gloved", "age", "state change", "actor initially rational", "sticky mittens", "action effect on contact")),
                    axis.title=c("Effect (Unexpected - Expected in seconds)"),
                    show.values=TRUE,
                    show.p=TRUE)
@@ -488,15 +573,18 @@ constraints.interventions.cooks <- cbind(
 ```
 
 
-When we compared the effects of different variants we found that motor training robustly increased infants' looking preference for the unexpected event (`r report(constraints.interventions.cooks,2,3,2)`). We also found that other interventions on the actions infants see, including seeing an action that causes an effect on contact (`r report(constraints.interventions.cooks,3,3,2)`), and seeing a reaching action that results in an object changing state, rather than picking up that object (`r report(constraints.interventions.cooks,4,3,2)`). These analyses included 249/264 total infants - the other 15 were classified as influential using Cook's Distance. Including all subjects in the analysis produced similar results, except that the state change effect crossed the threshold into non-significance (`r report(constraints.interventions,4,3,2)`). We did not find an effect of age, `r report(constraints.interventions.cooks,8,3,2)`.
+When we compared the effects of different variants we found that motor training  increased infants' looking preference for the unexpected event (`r report(constraints.interventions.cooks,2,3,2)`). We also found that other interventions on the actions infants see, including seeing an action that causes an effect on contact (`r report(constraints.interventions.cooks,3,3,2)`), and seeing a reaching action that results in an object changing state, rather than picking up that object (`r report(constraints.interventions.cooks,4,3,2)`). These analyses included `r nrow(constraints.cooks)`/`r nrow(constraints)` total infants - the other `r nrow(constraints)-nrow(constraints.cooks)` were classified as influential using Cook's Distance. Including all subjects in the analysis produced similar results, except that the state change effect crossed the threshold into non-significance (`r report(constraints.interventions,4,3,2)`). We did not find an effect of age, `r report(constraints.interventions.cooks,8,3,2)`.
 
 ## Goals Task
 ### Baseline Effect
-
 ```{r}
 goals <- ind.data %>% filter(task =="goals")
+```
+
+
+```{r}
 goals.baseline.data <- goals %>%
-  filter(condition %in% c("1_Control",
+  filter(condition %in% c("1_control",
                           "1_twoobject") &
            paper %in% c("gerson2014a",
                         "luo2011"))
@@ -580,6 +668,21 @@ dotplot_diag(x = cooks1, cutoff = "internal", name = "cooks.distance",  index=go
 
 goals.cooks <- goals[which(cooks1 <= 4/362),]
 
+
+# where are the influential observations?
+nrow(goals)
+nrow(goals.cooks)
+
+goals.summary <- goals %>%
+  group_by(paper,condition) %>%
+  summarise(n = n())
+
+goals.cooksn <- goals.cooks %>%
+  group_by(paper,condition) %>%
+  summarise(n_cooks = n()) 
+
+goals.where.influential <- full_join(goals.summary, goals.cooksn)
+
 goals.m1.cooks <- lmer(data = goals.cooks,
      formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
      control = lmerControl(optimizer="Nelder_Mead"))
@@ -598,5 +701,4 @@ goals.interventions.cooks<- cbind(
 
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
 
-When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (`r report(goals.interventions.cooks,4,3,2)`), or presenting a self-propelled object (`r report(goals.interventions.cooks,6,3,2)`), increased infants' looking preference for the unexpected event. We did not find any other effects, including those of motor experience, or action consequences, when taking into account all of these predictors in the same statistical model. These analyses included 345/362 total infants - the other 17 were classified as influential using Cook's Distance. Including all subjects in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into marginal-significance (`r report(constraints.interventions,4,3,2)`). We did not find an effect of age, `r report(goals.interventions.cooks,8,3,2)`.
-
+When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (`r report(goals.interventions.cooks,4,3,2)`), or presenting a self-propelled object as an agent (`r report(goals.interventions.cooks,6,3,2)`), relative to a hand or a person, increased infants' looking preference for the unexpected event. We did not find any other effects, including those of motor experience, or action consequences, when taking into account all of these predictors in the same model. These analyses included `r nrow(goals.cooks)`/`r nrow(goals)` total infants - the other `r nrow(goals)-nrow(goals.cooks)`  were classified as influential using Cook's Distance. Including all subjects in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into marginal-significance (`r report(constraints.interventions,4,3,2)`). We did not find an effect of age, `r report(goals.interventions.cooks,8,3,2)`.
