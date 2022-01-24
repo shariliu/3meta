@@ -423,10 +423,10 @@ plot2.constraints
 constraints <- ind.data %>% filter(task =="constraints")
 
 constraints$actor_hand
-constraints$action_consequence <- relevel(constraints$action_consequence, ref = "none")
-constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "no")
-constraints$training_yesno <- relevel(constraints$training_yesno, ref = "no")
-constraints$action_causal <- relevel(constraints$action_causal, ref = "no")
+constraints$action_consequence <- relevel(constraints$action_consequence, ref = "state_change")
+constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "yes")
+constraints$training_yesno <- relevel(constraints$training_yesno, ref = "yes")
+constraints$action_causal <- relevel(constraints$action_causal, ref = "yes")
 
 ```
 
@@ -442,7 +442,7 @@ constraints.b1 <- lmer(data = constraints.baseline.data,
                        formula = look_pref ~ 1 + ageday + (1|condition))
 summary(constraints.b1)
 
-constraints.b1.table <- sjPlot:: tab_model(constraints.b1,
+constraints.b1.table <- sjPlot::tab_model(constraints.b1,
                                            show.std	=TRUE,
                                            show.stat=TRUE,
                                            show.df=TRUE)
@@ -532,7 +532,8 @@ constraints.cooksn <- constraints.cooks %>%
   group_by(paper,condition) %>%
   summarise(n_cooks = n()) 
 
-constraints.where.influential <- full_join(constraints.summary,constraints.cooksn)
+constraints.where.influential <- full_join(constraints.summary,constraints.cooksn) %>%
+  mutate(n_excluded = n - n_cooks)
 
 constraints.m1.cooks <- lmer(data = constraints.cooks,
      formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
@@ -546,7 +547,7 @@ summary(constraints.m1.cooks.beta)
 plot_model(constraints.m1.cooks.beta)
 
 
-sjPlot::plot_model(constraints.m1.cooks,
+sjPlot::plot_model(constraints.m1.cooks.beta,
                    type = "pred",
                    # colors = "bw",
                    sort.est=TRUE,
@@ -554,14 +555,22 @@ sjPlot::plot_model(constraints.m1.cooks,
                    show.values=TRUE,
                    show.p=TRUE)
 
-plot(allEffects(constraints.m1.cooks))
+plot(allEffects(constraints.m1.cooks.beta))
 
-sjPlot::plot_model(constraints.m1.cooks,
+#TODO figure out which levels of hand is which
+sjPlot::plot_model(constraints.m1.cooks.beta,
                    type = "est",
                    colors = "bw",
                    sort.est=TRUE,
-                    axis.labels= rev(c("mittened", "gloved", "age", "state change", "actor initially rational", "sticky mittens", "action effect on contact")),
-                   axis.title=c("Effect (Unexpected - Expected in seconds)"),
+                   title = "",
+                   axis.labels= c("Age in days",
+                                  "Hand (gloved)",
+                                  "Hand (bare)",
+                                  "State change (vs location change)",
+                                  "Actor efficient during habituation",
+                                  "Sticky mittens training",
+                                  "Action causes change"),
+                   axis.title=c("Effect on looking (unexpected - expected) in standard deviations"),
                    show.values=TRUE,
                    show.p=TRUE)
 
@@ -579,6 +588,12 @@ When we compared the effects of different variants we found that motor training 
 ### Baseline Effect
 ```{r}
 goals <- ind.data %>% filter(task =="goals")
+
+goals$action_consequence <- relevel(goals$action_consequence, ref = "none")
+goals$agent <- relevel(goals$agent, ref = "object")
+goals$training_yesno <- relevel(goals$training_yesno, ref = "yes")
+goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visible_fam, ref = "yes")
+
 ```
 
 
@@ -644,6 +659,7 @@ goals %>%
 
 # aa <- allFit(goals.m1)
 
+#TODO figure out which levels of agent are in here
 summary(goals.m1)
 sjPlot::plot_model(goals.m1,
                    type = "est",
@@ -681,7 +697,8 @@ goals.cooksn <- goals.cooks %>%
   group_by(paper,condition) %>%
   summarise(n_cooks = n()) 
 
-goals.where.influential <- full_join(goals.summary, goals.cooksn)
+goals.where.influential <- full_join(goals.summary, goals.cooksn) %>%
+  mutate(n_excluded  = n - c_cooks)
 
 goals.m1.cooks <- lmer(data = goals.cooks,
      formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
