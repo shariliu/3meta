@@ -698,7 +698,7 @@ goals.cooksn <- goals.cooks %>%
   summarise(n_cooks = n()) 
 
 goals.where.influential <- full_join(goals.summary, goals.cooksn) %>%
-  mutate(n_excluded  = n - c_cooks)
+  mutate(n_excluded  = n - n_cooks)
 
 goals.m1.cooks <- lmer(data = goals.cooks,
      formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
