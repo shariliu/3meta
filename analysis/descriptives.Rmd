@@ -255,7 +255,7 @@ liu2019_descriptives <- liu2019 %>%
 knitr::kable(liu2019_descriptives, digits = 4)
 ```
 
-### Woo, B., Liu, S., & Spelke, E. S. (unpublished). Three-month-olds' understanding of object identity vs location as the goals of other people's reaches.
+### Woo, B., Liu, S., & Spelke, E. S. (2021, cogsci). Open-minded, not naïve: Three-month-old infants encode objects as the goals of other people’s reaches
 
 #### Study 1
 ```{r woo_unpublished}
@@ -319,31 +319,72 @@ woo_unpublished_study2_descriptives <- woo_unpublished_study2 %>%
 knitr::kable(woo_unpublished_study2_descriptives, digits = 4)
 ```
 
+#### Study 3
+
+```{r}
+woo_unpublished_study3 <- read.csv(file="formatted_data/csv_and_codebook/woo_unpublished_study3.csv") %>%
+  dplyr::select(Subject.ID, Sex, Age.Month, Age.Day, LT, Type, Trial.N) %>%
+  mutate(MA_condition="2_disambiguatinglocationgoal") %>%
+  mutate(Subject.ID = as.factor(Subject.ID),
+         Type = as.factor(Type),
+         ageday= 30.44 * Age.Month + Age.Day) %>%
+  group_by(Subject.ID, Sex, ageday, MA_condition, Type) %>%
+  dplyr::summarize(avg.look = mean(LT, na.rm=TRUE)) %>%
+  spread(Type, avg.look) %>%
+  mutate(exp_look = Different_Object, unexp_look = Different_Location,
+                  experiment="Exp.3") %>%
+  rename(sex = Sex) %>%
+  ungroup()
+
+woo_unpublished_study3_descriptives <- woo_unpublished_study3 %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(sex=="F") / n_babies,
+                   m_age = mean(ageday),
+                  range_age = range(ageday)[2] - range(ageday)[1])
+knitr::kable(woo_unpublished_study3_descriptives, digits = 4)
+```
+
 ### Generate one dataset
 
 ```{r}
-# strip.cols <- function(x) {
-#   stripped.cols <- x %>%
-#     dplyr::select(MA_condition,ageday,exp_look,unexp_look,sex) %>%
-#   as.data.frame()
-#   stripped.cols$paper <- deparse(substitute(x))
-#   write.table(stripped.cols,
-#               file="individual_data.csv",
-#               col.names=F,
-#               append=T,
-#               sep=",")
-# }
-# 
-# 
-# result <- list(luo2011,
-#                skerry2013,
-#                gerson2014a,
-#                gerson2014b,
-#                choi_ongoing,
-#                choi2018,
-#                liu2019,
-#                woo_unpublished_study1,
-#                woo_unpublished_study2) %>%
-#   lapply(strip.cols)
+
+# init empty
+datasofar <- NA
+
+strip.cols <- function(x) {
+  stripped.cols <- x %>%
+    dplyr::select(MA_condition,ageday,exp_look,unexp_look,sex) %>%
+    as.data.frame()
+   stripped.cols$paper <-deparse(substitute(x))
+   return(stripped.cols)
+  # datasofar <- rbind(datasofar, stripped.cols)
+  # return(datasofar)
+  # write.table(stripped.cols,
+  #             file="individual_data_24jan22.csv",
+  #             col.names=F,
+  #             append=T,
+  #             sep=",")
+}
+
+
+studies <-  list(luo2011,
+               skerry2013,
+               gerson2014a,
+               gerson2014b,
+               choi_ongoing,
+               choi2018,
+               liu2019,
+               woo_unpublished_study1,
+               woo_unpublished_study2,
+               woo_unpublished_study3)
+
+lapply(studies,strip.cols)
+
 ```
 
