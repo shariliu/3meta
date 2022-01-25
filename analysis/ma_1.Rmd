@@ -38,13 +38,14 @@ library("dplyr")
 
 ```{r import.data}
 
-ind.data.pre <- read.csv("./individual_data.csv") %>%
-  mutate(experiment=str_sub(condition,1,1)) %>%
+ind.data.pre <- read.csv("./ma_study_data.csv", header=TRUE) %>%
+  mutate(experiment=str_sub(MA_condition,1,1)) %>%
   mutate_if(is.character,as.factor) %>%
-  mutate(subj = as.factor(subj))%>%
+  mutate(subj = as.factor(subj),
+         condition = MA_condition)%>%
   mutate_at(.vars="condition", .funs = tolower)
 
-ma.data <- read.csv("./ma_data.csv") %>%
+ma.data <- read.csv("./ma_study_designs_updated.csv") %>%
   rename(paper = study_ID,
          condition = expt_condition,
          experiment = expt_num,
@@ -58,7 +59,6 @@ study.design <- ma.data %>%
   mutate(experiment = as.factor(experiment)) %>%
   filter(paper != "sommerville2005",
          task != "causes")
-
 
 # merge study design with individual looks from babies
 
@@ -346,7 +346,7 @@ ggplot(ind.data, aes(x=look_pref)) +
 
 plot1 <- ggplot(ind.data.long,
        aes(trial_type, looking_time, colour=paper))+
-  theme_cowplot(12)+
+  theme_minimal_hgrid(12)+
   theme(legend.title = element_blank())+
   geom_boxplot(outlier.alpha = 0.2)+
   geom_point(alpha=0.2)+
@@ -372,9 +372,10 @@ plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
   geom_point(alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
-  theme_cowplot(18)+
+  theme_cowplot(12)+
   facet_grid(~paper, scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
+  coord_cartesian(ylim=c(-40,40))+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")+
   scale_fill_brewer(palette = "Dark2")
 
@@ -385,10 +386,11 @@ plot2.constraints <- ggplot(ind.data %>% filter(task == "constraints"),
   geom_point(alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
-  theme_cowplot(18)+
+  theme_cowplot(12)+
   facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("")+
   xlab("")+
+  coord_cartesian(ylim=c(-40,40))+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")+
   scale_fill_manual(values = wes_palette("Royal2"))
 
@@ -563,13 +565,13 @@ sjPlot::plot_model(constraints.m1.cooks.beta,
                    colors = "bw",
                    sort.est=TRUE,
                    title = "",
-                   axis.labels= c("Age in days",
-                                  "Hand (gloved)",
-                                  "Hand (bare)",
-                                  "State change (vs location change)",
-                                  "Actor efficient during habituation",
-                                  "Sticky mittens training",
-                                  "Action causes change"),
+                   # axis.labels= c("Age in days",
+                   #                "Hand (gloved)",
+                   #                "Hand (bare)",
+                   #                "State change (vs location change)",
+                   #                "Actor efficient during habituation",
+                   #                "Sticky mittens training",
+                   #                "Action causes change"),
                    axis.title=c("Effect on looking (unexpected - expected) in standard deviations"),
                    show.values=TRUE,
                    show.p=TRUE)
@@ -682,7 +684,7 @@ goals.interventions<- cbind(
 cooks1 <- cooks.distance(goals.m1, group = "subj")
 dotplot_diag(x = cooks1, cutoff = "internal", name = "cooks.distance",  index=goals$subj) + ylab("Cook's distance") + xlab("subjID")
 
-goals.cooks <- goals[which(cooks1 <= 4/362),]
+goals.cooks <- goals[which(cooks1 <= 4/386),]
 
 
 # where are the influential observations?
