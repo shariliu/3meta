@@ -20,6 +20,9 @@ ipak <- function (pkg) {
 packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr")
 
 ipak(packages)
+
+detach("package:dplyr", unload = TRUE)
+library(dplyr, lib.loc = "/Library/Frameworks/R.framework/Versions/4.0/Resources/library")
 ```
 
 
@@ -39,11 +42,11 @@ luo2011 <- read.csv(file = "formatted_data/csv_and_codebook/luo2011.csv", header
   mutate(age_m = as.numeric(age_m),
          age_d = as.numeric(age_d)) %>%
   mutate(ageday= 30.44 * age_m + age_d) %>%
-  mutate(exp_look = old.goal, unexp_look = new.goal) %>%
+  mutate(exp_look = old.goal, unexp_look = new.goal, paper = "luo2011") %>%
   rename(sex=gender)
 
 luo2011_descriptives <- luo2011 %>% 
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -69,11 +72,12 @@ skerry2013 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.
                                 experiment== "SCS.Exp.5" & hab == "unconstrained" ~ "5_unconstrainedactionhabituation"
                                 )
          ) %>%
-    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff) 
+    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff,
+            paper = "skerry2013") 
 
 
 skerry2013_descriptives <- skerry2013 %>% 
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1_prop = mean(unexp_look_prop, na.rm=TRUE),
                    sd_1_prop = sd(unexp_look_prop, na.rm=TRUE),
                    x_1 = mean(unexp_look, na.rm=TRUE),
@@ -103,10 +107,10 @@ gerson2014a <- read.csv(file="formatted_data/csv_and_codebook/gerson2014a_ibd.cs
          exp_look = OldGoal_Avg
          ) %>%
   rename(sex=Sex)%>%
-  mutate(ageday=Age*30.44)
+  mutate(ageday=Age*30.44, paper="gerson2014a")
 
 gerson2014a_descriptives <- gerson2014a %>%
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -134,10 +138,10 @@ gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv
          exp_look = OldGoal_Avg
          ) %>%
   rename(sex=Sex)%>%
-  mutate(ageday=Age_m*30.44)
+  mutate(ageday=Age_m*30.44, paper="gerson2014b")
 
 gerson2014b_descriptives <- gerson2014b %>%
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -169,11 +173,11 @@ choi2018 <- read.csv(file="formatted_data/csv_and_codebook/choi2018.csv", header
   mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
          Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
   mutate(unexp_look = New.goal_Avg,
-         exp_look = Old.goal_Avg
-         )
+         exp_look = Old.goal_Avg,
+         paper = "choi2018")
 
 choi2018_descriptives <- choi2018 %>%
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -190,7 +194,7 @@ knitr::kable(choi2018_descriptives, digits = 4)
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (unpublished). Ongoing project.
 
 ```{r choi_ongoing}
-choi_ongoing <- read.csv(file="formatted_data/csv_and_codebook/choi_ongoing.csv", header=TRUE) %>%
+choi_unpub <- read.csv(file="formatted_data/csv_and_codebook/choi_ongoing.csv", header=TRUE) %>%
     mutate(experiment = case_when(condition=="Equidistant" ~"Exp.1",
                                 condition=="Near-target" ~"Exp.1",
                                 condition=="Far-target" ~ "Exp.1"),
@@ -205,11 +209,11 @@ choi_ongoing <- read.csv(file="formatted_data/csv_and_codebook/choi_ongoing.csv"
   mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
          Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
   mutate(unexp_look = New.goal_Avg,
-         exp_look = Old.goal_Avg
-         ) 
+         exp_look = Old.goal_Avg,
+         paper = "choi_unpub") 
 
-choi_ongoing_descriptives <- choi_ongoing %>%
-  group_by(MA_condition) %>%
+choi_ongoing_descriptives <- choi_unpub %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -237,10 +241,11 @@ liu2019 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.csv
                                 experiment== "Exp.5" & causal == "no" ~ "5_statechangenotcausal"
                                 )
          ) %>%
-    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff)
+    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff,
+           paper = "liu2019")
 
 liu2019_descriptives <- liu2019 %>% 
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1_prop = mean(unexp_look_prop, na.rm=TRUE),
                    sd_1_prop = sd(unexp_look_prop, na.rm=TRUE),
                    x_1 = mean(unexp_look, na.rm=TRUE),
@@ -270,12 +275,13 @@ woo_unpublished_study1 <- read.csv(file="formatted_data/csv_and_codebook/liu_unp
   spread(testtrial,avg.look) %>%
   mutate(exp_look = old.goal,
          unexp_look = new.goal,
-         experiment="Exp.1")%>%
+         experiment="Exp.1",
+         paper = "woo_unpub")%>%
   rename(ageday=agedays) %>%
   ungroup()
 
 woo_unpublished_study1_descriptives <- woo_unpublished_study1 %>% 
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -285,7 +291,6 @@ woo_unpublished_study1_descriptives <- woo_unpublished_study1 %>%
                    prop_girls = sum(sex=="f") / n_babies,
                    m_age = mean(ageday),
                   range_age = range(ageday)[2] - range(ageday)[1])
-knitr::kable(woo_unpublished_study1_descriptives, digits = 4)
 ```
 
 #### Study 2
@@ -300,13 +305,15 @@ woo_unpublished_study2 <- read.csv(file="formatted_data/csv_and_codebook/woo_unp
   group_by(Subject.ID, Sex, ageday, MA_condition, Type) %>%
   dplyr::summarize(avg.look = mean(LT, na.rm=TRUE)) %>%
   spread(Type, avg.look) %>%
-  mutate(exp_look = Different_Location, unexp_look = Different_Object,
-                  experiment="Exp.2") %>%
+  mutate(exp_look = Different_Location, 
+         unexp_look = Different_Object,
+         experiment="Exp.2",
+         paper = "woo_unpub") %>%
   rename(sex = Sex) %>%
   ungroup()
 
 woo_unpublished_study2_descriptives <- woo_unpublished_study2 %>% 
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -316,7 +323,6 @@ woo_unpublished_study2_descriptives <- woo_unpublished_study2 %>%
                    prop_girls = sum(sex=="F") / n_babies,
                    m_age = mean(ageday),
                   range_age = range(ageday)[2] - range(ageday)[1])
-knitr::kable(woo_unpublished_study2_descriptives, digits = 4)
 ```
 
 #### Study 3
@@ -324,20 +330,22 @@ knitr::kable(woo_unpublished_study2_descriptives, digits = 4)
 ```{r}
 woo_unpublished_study3 <- read.csv(file="formatted_data/csv_and_codebook/woo_unpublished_study3.csv") %>%
   dplyr::select(Subject.ID, Sex, Age.Month, Age.Day, LT, Type, Trial.N) %>%
-  mutate(MA_condition="2_disambiguatinglocationgoal") %>%
+  mutate(MA_condition="3_disambiguatinglocationgoal") %>%
   mutate(Subject.ID = as.factor(Subject.ID),
          Type = as.factor(Type),
          ageday= 30.44 * Age.Month + Age.Day) %>%
   group_by(Subject.ID, Sex, ageday, MA_condition, Type) %>%
   dplyr::summarize(avg.look = mean(LT, na.rm=TRUE)) %>%
   spread(Type, avg.look) %>%
-  mutate(exp_look = Different_Object, unexp_look = Different_Location,
-                  experiment="Exp.3") %>%
+  mutate(exp_look = Different_Object, 
+         unexp_look = Different_Location,
+         paper = "woo_unpub",
+         experiment="Exp.3") %>%
   rename(sex = Sex) %>%
   ungroup()
 
 woo_unpublished_study3_descriptives <- woo_unpublished_study3 %>%
-  group_by(MA_condition) %>%
+  group_by(paper, MA_condition) %>%
   dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
                    x_2 = mean(exp_look, na.rm=TRUE),
                    sd_1 = sd(unexp_look, na.rm=TRUE),
@@ -347,29 +355,23 @@ woo_unpublished_study3_descriptives <- woo_unpublished_study3 %>%
                    prop_girls = sum(sex=="F") / n_babies,
                    m_age = mean(ageday),
                   range_age = range(ageday)[2] - range(ageday)[1])
-knitr::kable(woo_unpublished_study3_descriptives, digits = 4)
+knitr::kable(rbind(woo_unpublished_study1_descriptives, woo_unpublished_study2_descriptives,
+  woo_unpublished_study3_descriptives), digits = 4)
 ```
 
 ### Generate one dataset
 
 ```{r}
 
-# init empty
+# init empty df
 datasofar <- NA
 
 strip.cols <- function(x) {
   stripped.cols <- x %>%
-    dplyr::select(MA_condition,ageday,exp_look,unexp_look,sex) %>%
+    dplyr::select(paper, MA_condition,ageday,exp_look,unexp_look,sex) %>%
     as.data.frame()
-   stripped.cols$paper <-deparse(substitute(x))
-   return(stripped.cols)
-  # datasofar <- rbind(datasofar, stripped.cols)
-  # return(datasofar)
-  # write.table(stripped.cols,
-  #             file="individual_data_24jan22.csv",
-  #             col.names=F,
-  #             append=T,
-  #             sep=",")
+  datasofar <- rbind(datasofar, stripped.cols)
+  return(stripped.cols)
 }
 
 
@@ -377,14 +379,16 @@ studies <-  list(luo2011,
                skerry2013,
                gerson2014a,
                gerson2014b,
-               choi_ongoing,
+               choi_unpub,
                choi2018,
                liu2019,
                woo_unpublished_study1,
                woo_unpublished_study2,
                woo_unpublished_study3)
 
-lapply(studies,strip.cols)
+combined.dataset <- do.call(rbind.data.frame, lapply(studies,strip.cols)) %>%
+  mutate(sex = tolower(sex))
 
+#write.csv(combined.dataset, "combined_ma_data.csv")
 ```
 
