@@ -132,7 +132,7 @@ gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv
                                 Condition=="Obs" ~"Exp.1",
                                 Condition=="gen" ~ "Exp.2"),
          MA_condition = case_when(Condition=="Act" ~"1_Active",
-                                Condition=="Obs" ~"1_Observational",
+                                Condition=="Obs" ~"1_Observation",
                                 Condition=="gen" ~ "2_Generalization"),
          unexp_look = NewGoal_Avg,
          exp_look = OldGoal_Avg
@@ -388,7 +388,7 @@ studies <-  list(luo2011,
 
 combined.dataset <- do.call(rbind.data.frame, lapply(studies,strip.cols)) %>%
   mutate(sex = tolower(sex))
-
+str(combined.dataset)
 #write.csv(combined.dataset, "combined_ma_data.csv")
 ```
 
