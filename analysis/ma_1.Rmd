@@ -130,16 +130,21 @@ report <- function(table, index, places, tails, flip) {
   return(result)
 }
 
+se <- function(x, na.rm = FALSE) {
+ if (na.rm) x <- na.omit(x)
+ return(sd(x) / sqrt(length(x)))
+}
+
 describe <- function(dataset){
   summary <- dataset %>%
-  summarise(unexp_avg = mean(unexp_look),
-            exp_avg = mean(exp_look),
-            lookdiff_avg = mean(look_pref),
+  summarise(lookdiff_avg = mean(look_pref, na.rm=TRUE),
+            lookdiff_SE = se(look_pref,na.rm=TRUE),
             n = n())
   paste(
         #"M_unexp = ", summary$unexp_avg, "s ",
         #"M_exp = ", summary$exp_avg, "s ",
-        "Mean_diff = ", round(summary$lookdiff_avg,3), "seconds"
+        "Mean looking preference = ", round(summary$lookdiff_avg,3), "seconds, ",
+        "standard error (SE) = ", round(summary$lookdiff_SE,3)
   )
 }
 ```
@@ -293,6 +298,11 @@ ind.data.long <- ind.data %>%
 
 ind.data.summary <- summarySEwithin(data = ind.data.long, measurevar = "looking_time", betweenvars = c("task", "paper", "experiment", "condition"), withinvars = "trial_type")
 
+ind.pref.summary <- summarySE(data = ind.data, measurevar = "look_pref", groupvars = c("task", "paper", "experiment", "condition"))
+
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) 
+  
 n_infants <- ind.data.summary %>%
   filter(trial_type == "expected") %>% # just take one row per study
   summarise(sum(N))
@@ -310,7 +320,7 @@ n_papers <- ind.data.summary %>%
 ```
 
 # Summary of data sources
-We searched for all journal papers, theses, and conference proceedings that reported looking time data from typically developing infants between 2 and 4 months of age in a task structured like the goals or constraints task. We also emailed two listservs (Cognitive Development Society, and Infant Studies) to request more datasets. This resulted in a final list of 11 papers and 35 conditions. We contacted the authors and asked them to send us the original datasets from this past published and unpublished work. We were able to gather original datasets from `r n_papers` papers, `r n_conditions` conditions, and `r n_infants` infants (age range `r floor(min(ind.data$ageday))`-`r floor(max(ind.data$ageday))`. A team of researchers were then randomly assigned to look through relevant papers including supplemental materials (with SL double-checking every entry and resolving disagreements). When exact values were not provided, or when we came across other ambiguities (e.g. numbers reported in the paper differ from the numbers calculated using the raw data), the team contacted authors to try and address, and also used the tool WebplotDigitizer (https://automeris.io/WebPlotDigitizer/) to extract estimated values from figures. If there were discrepancies between the paper, figures and/or raw data, we prioritized the values from the raw data if available, then author correspondence, then paper, then estimates from figures, in that order. For individual datasets, authors were asked to provide their data and a codebook, and were asked for permission to share their stimuli and data publicly on OSF. Of `r n_papers` papers (`r n_conditions`, conditions), data from 25 conditions and stimuli from 13 conditions (either actual study videos, or example stimuli) are publicly available at https://osf.io/zwncg/.
+We searched for all journal papers, theses, and conference proceedings that reported looking time data from typically developing infants between 2 and 4 months of age in a task structured like the goals or constraints task. We also emailed two listservs (Cognitive Development Society, and Infant Studies) to request more datasets. This resulted in a final list of 11 papers and 35 conditions. We contacted the authors and asked them to send us the original datasets from this past published and unpublished work. We were able to gather original datasets from `r n_papers` papers, `r n_conditions` conditions, and `r length(unique(ind.data$subj))` infants (age range `r floor(min(ind.data$ageday))`-`r floor(max(ind.data$ageday))`. A team of researchers were then randomly assigned to look through relevant papers including supplemental materials (with SL double-checking every entry and resolving disagreements). When exact values were not provided, or when we came across other ambiguities (e.g. numbers reported in the paper differ from the numbers calculated using the raw data), the team contacted authors to try and address, and also used the tool WebplotDigitizer (https://automeris.io/WebPlotDigitizer/) to extract estimated values from figures. If there were discrepancies between the paper, figures and/or raw data, we prioritized the values from the raw data if available, then author correspondence, then paper, then estimates from figures, in that order. For individual datasets, authors were asked to provide their data and a codebook, and were asked for permission to share their stimuli and data publicly on OSF. Of `r n_papers` papers (`r n_conditions`, conditions), data from xx conditions and stimuli from xx conditions (either actual study videos, or example stimuli) are publicly available at https://osf.io/zwncg/.
 
 ```{r table.experiments}
 table.goals <- ind.data %>%
@@ -321,7 +331,7 @@ table.goals <- ind.data %>%
 
 table.constraints <- ind.data %>%
   filter(task=="constraints") %>%
-  group_by(paper, condition, training_yesno, action_causal, action_consequence, location_object_goal_ambiguous, agent_efficient_fam, actor_hand) %>%
+  group_by(paper, condition, training_yesno, action_causal, action_consequence, agent_efficient_fam, actor_hand) %>%
   summarise(n = n(), agemin = floor(range(ageday)[1]), agemax = floor(range(ageday)[2])) %>%
   select(paper, condition, n, agemin, agemax, training_yesno, action_causal, action_consequence, agent_efficient_fam, actor_hand)
 
@@ -331,22 +341,31 @@ knitr::kable(table.goals)
 knitr::kable(table.constraints)
 ```
 
+Data appear to be normally distributed, no need to log transform.
 ```{r normal.dist.check}
 str(ind.data)
 
-ggplot(ind.data, aes(x=look_pref)) +
+# data appear to be normally distributed
+dist1 <- ggplot(ind.data, aes(x=look_pref)) +
   geom_histogram()+
-  facet_grid(~paper)+
   theme_cowplot(12)
+
+dist2 <- ggplot(ind.data, aes(x=look_pref)) +
+  geom_histogram()+
+  facet_wrap(~paper,nrow=3)+
+  theme_cowplot(12)
+
+(dist1 | dist2)  + plot_layout(widths = c(1,4)) + plot_annotation(tag_levels = 'A')
 ```
 
 # Plots
 
+Looking to the expected vs unexpected event for all individual conditions.
 ```{r plots.looks}
 
 plot1 <- ggplot(ind.data.long,
        aes(trial_type, looking_time, colour=paper))+
-  theme_minimal_hgrid(12)+
+  theme_cowplot(12)+
   theme(legend.title = element_blank())+
   geom_boxplot(outlier.alpha = 0.2)+
   geom_point(alpha=0.2)+
@@ -363,6 +382,7 @@ plot1 <- ggplot(ind.data.long,
 plot1
 ```
 
+Looking preference (unexpected - expected) for all individual conditions.
 ```{r plots.lookdiffs}
 
 plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
@@ -395,14 +415,11 @@ plot2.constraints <- ggplot(ind.data %>% filter(task == "constraints"),
   scale_fill_manual(values = wes_palette("Royal2"))
 
 
-plot2.goals
-
-plot2.constraints 
-
 (plot2.goals | plot2.constraints) + plot_layout(widths = c(2, 1)) + plot_annotation(tag_levels = 'A')
 
 ```
 
+Looking preference (unexpected - expected) vs age for all individual conditions.
 ```{r plot.ageeffects}
 
 (plot3 <- ggplot(ind.data,
@@ -420,10 +437,12 @@ plot2.constraints
 
 ```
 
+# Confirmatory Analysis
 ## Constraints Task
 ```{r}
 constraints <- ind.data %>% filter(task =="constraints")
 
+# checking ref levels for all factors
 constraints$actor_hand
 constraints$action_consequence <- relevel(constraints$action_consequence, ref = "state_change")
 constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "yes")
@@ -439,10 +458,15 @@ constraints.baseline.data <- constraints %>%
   filter(condition %in% c("3_notraining",
                           "1_pickupglove",
                           "2_pickupbarehand"))
-  
+
+
 constraints.b1 <- lmer(data = constraints.baseline.data,
                        formula = look_pref ~ 1 + ageday + (1|condition))
 summary(constraints.b1)
+
+resid_panel(constraints.b1, plots = "all",
+                          smoother = TRUE,
+                          qqbands = TRUE)
 
 constraints.b1.table <- sjPlot::tab_model(constraints.b1,
                                            show.std	=TRUE,
@@ -467,6 +491,7 @@ excluded.subs <- c("90", "553", "86")
 constraints.b1.cooks <- lmer(data = constraints.baseline.data %>%
                          filter(!subj %in% excluded.subs),
                        formula = look_pref ~ 1 + ageday + (1|condition))
+
 
 summary(constraints.b1.cooks)
 plot(allEffects(constraints.b1.cooks))
@@ -537,6 +562,8 @@ constraints.cooksn <- constraints.cooks %>%
 constraints.where.influential <- full_join(constraints.summary,constraints.cooksn) %>%
   mutate(n_excluded = n - n_cooks)
 
+knitr::kable(constraints.where.influential)
+
 constraints.m1.cooks <- lmer(data = constraints.cooks,
      formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
      REML=FALSE)
@@ -546,8 +573,6 @@ constraints.m1.cooks.beta <- lmer(data = constraints.cooks,
      formula = scale(look_pref) ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday) + (1|condition) + (1|experiment) + (1|paper),
      REML=FALSE)
 summary(constraints.m1.cooks.beta)
-plot_model(constraints.m1.cooks.beta)
-
 
 sjPlot::plot_model(constraints.m1.cooks.beta,
                    type = "pred",
@@ -584,7 +609,7 @@ constraints.interventions.cooks <- cbind(
 ```
 
 
-When we compared the effects of different variants we found that motor training  increased infants' looking preference for the unexpected event (`r report(constraints.interventions.cooks,2,3,2)`). We also found that other interventions on the actions infants see, including seeing an action that causes an effect on contact (`r report(constraints.interventions.cooks,3,3,2)`), and seeing a reaching action that results in an object changing state, rather than picking up that object (`r report(constraints.interventions.cooks,4,3,2)`). These analyses included `r nrow(constraints.cooks)`/`r nrow(constraints)` total infants - the other `r nrow(constraints)-nrow(constraints.cooks)` were classified as influential using Cook's Distance. Including all subjects in the analysis produced similar results, except that the state change effect crossed the threshold into non-significance (`r report(constraints.interventions,4,3,2)`). We did not find an effect of age, `r report(constraints.interventions.cooks,8,3,2)`.
+When we compared the effects of different variants we found that motor training  increased infants' looking preference for the unexpected event (`r report(constraints.interventions,2,3,2)`). We also found that other interventions on the actions infants saw, including seeing an action that causes an effect on contact (`r report(constraints.interventions,3,3,2)`). We did not find an effect of age, `r report(constraints.interventions,8,3,2)`. This analysis included `r nrow(constraints)` total infants, `r nrow(constraints)-nrow(constraints.cooks)` of were classified as influential by Cook's Distance. When these influential participants were excluded from the analysis, we found qualitatively equivalent results, except that the effect of seeing an action that resulted in a state change (versus location change) crossed the threshold into significance (`r report(constraints.interventions.cooks,4,3,2)`). 
 
 ## Goals Task
 ### Baseline Effect
@@ -681,10 +706,10 @@ goals.interventions<- cbind(
 ) 
 
 
-cooks1 <- cooks.distance(goals.m1, group = "subj")
-dotplot_diag(x = cooks1, cutoff = "internal", name = "cooks.distance",  index=goals$subj) + ylab("Cook's distance") + xlab("subjID")
+cooks.goals <- cooks.distance(goals.m1, group = "subj")
+dotplot_diag(x = cooks.goals, cutoff = "internal", name = "cooks.distance",  index=goals$subj) + ylab("Cook's distance") + xlab("subjID")
 
-goals.cooks <- goals[which(cooks1 <= 4/386),]
+goals.cooks <- goals[which(cooks.goals <= 4/386),]
 
 
 # where are the influential observations?
@@ -701,6 +726,8 @@ goals.cooksn <- goals.cooks %>%
 
 goals.where.influential <- full_join(goals.summary, goals.cooksn) %>%
   mutate(n_excluded  = n - n_cooks)
+
+knitr::kable(goals.where.influential)
 
 goals.m1.cooks <- lmer(data = goals.cooks,
      formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
@@ -720,4 +747,4 @@ goals.interventions.cooks<- cbind(
 
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
 
-When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (`r report(goals.interventions.cooks,4,3,2)`), or presenting a self-propelled object as an agent (`r report(goals.interventions.cooks,6,3,2)`), relative to a hand or a person, increased infants' looking preference for the unexpected event. We did not find any other effects, including those of motor experience, or action consequences, when taking into account all of these predictors in the same model. These analyses included `r nrow(goals.cooks)`/`r nrow(goals)` total infants - the other `r nrow(goals)-nrow(goals.cooks)`  were classified as influential using Cook's Distance. Including all subjects in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into marginal-significance (`r report(constraints.interventions,4,3,2)`). We did not find an effect of age, `r report(goals.interventions.cooks,8,3,2)`.
+When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (marginal effect, `r report(goals.interventions,4,3,2)`), or presenting a self-propelled object (marginal effect, `r report(goals.interventions,5,3,2)`) or an entire person (`r report(goals.interventions,6,3,2)`), relative to seeing a hand appear from off-stage, increased infants' looking preference for the unexpected event. We did not find any other effects, including age, motor training, or action consequences, when taking into account all of these predictors in the same model. We did not find an effect of age, `r report(goals.interventions,8,3,2)`. These analyses included `r nrow(goals)` total infants, `r nrow(goals)-nrow(goals.cooks)` of whom were classified as influential based on Cook's Distance. Excluding these influential participants in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into significance (`r report(goals.interventions.cooks,4,3,2)`), and the two effects of the agent type crossed the threshold out of significance (marginal effect of object, `r report(goals.interventions.cooks,5,3,2)`; non-significant effect of entire person, `r report(goals.interventions.cooks,6,3,2)`).
