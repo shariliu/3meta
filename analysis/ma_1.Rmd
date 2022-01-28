@@ -60,6 +60,10 @@ study.design <- ma.data %>%
   filter(paper != "sommerville2005",
          task != "causes")
 
+ma.data %>% 
+  select(paper, long_cite) %>%
+  unique() %>%
+  knitr::kable()
 # merge study design with individual looks from babies
 
 ind.data <- left_join(ind.data.pre, study.design, 
@@ -375,7 +379,7 @@ plot1 <- ggplot(ind.data.long,
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   ylab("Looking Time (s)")+
   xlab("Condition")+
-  facet_wrap(~task+paper+condition, nrow=4, labeller=label_wrap_gen())+
+  facet_wrap(~task+paper+condition, nrow=6, labeller=label_wrap_gen())+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2),
         legend.position="bottom")
   
@@ -420,7 +424,8 @@ plot2.constraints <- ggplot(ind.data %>% filter(task == "constraints"),
 ```
 
 Looking preference (unexpected - expected) vs age for all individual conditions.
-```{r plot.ageeffects}
+
+```{r plot.ageeffects, fig.width=8}
 
 (plot3 <- ggplot(ind.data,
                  aes(ageday, look_pref, colour=paper)) +
@@ -584,8 +589,7 @@ sjPlot::plot_model(constraints.m1.cooks.beta,
 
 plot(allEffects(constraints.m1.cooks.beta))
 
-#TODO figure out which levels of hand is which
-sjPlot::plot_model(constraints.m1.cooks.beta,
+regressionplot1<- sjPlot::plot_model(constraints.m1.cooks.beta,
                    type = "est",
                    colors = "bw",
                    sort.est=TRUE,
@@ -682,7 +686,6 @@ summary(goals.m1)
 
 # aa <- allFit(goals.m1)
 
-#TODO figure out which levels of agent are in here
 summary(goals.m1)
 sjPlot::plot_model(goals.m1,
                    type = "est",
@@ -744,8 +747,7 @@ sjPlot::plot_model(goals.m1.cooks.beta,
 
 plot(allEffects(goals.m1.cooks.beta))
 
-#TODO figure out which levels of hand is which
-sjPlot::plot_model(goals.m1.cooks.beta,
+regressionplot2 <- sjPlot::plot_model(goals.m1.cooks.beta,
                    type = "est",
                    colors = "bw",
                    sort.est=TRUE,
@@ -771,6 +773,10 @@ goals.interventions.cooks<- cbind(
   gen.ci(goals.m1.cooks)[4:11,]
 ) 
 
+```
+
+```{r}
+(regressionplot1 | regressionplot2) + plot_annotation(tag_levels = 'A')
 ```
 
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
