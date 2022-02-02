@@ -597,7 +597,7 @@ regressionplot1<- sjPlot::plot_model(constraints.m1.cooks.beta,
                    axis.labels= c("Age in days",
                                   "Hand (bare)",
                                   "Hand (gloved)",
-                                  "State change (vs location change)",
+                                  "State change",
                                   "Actor efficient during habituation",
                                   "Sticky mittens training",
                                   "Action on contact"),
@@ -610,6 +610,9 @@ constraints.interventions.cooks <- cbind(
   gen.m(constraints.m1.cooks),
   gen.ci(constraints.m1.cooks)[3:10,]
 ) 
+
+sjPlot:: tab_model(constraints.m1.cooks.beta, show.stat=TRUE)
+
 ```
 
 
@@ -755,7 +758,7 @@ regressionplot2 <- sjPlot::plot_model(goals.m1.cooks.beta,
                    axis.labels= c("Agent (person)",
                                   "Age in days",
                                   "Sticky mittens training",
-                                  "State change (vs no change)",
+                                  "State change",
                                   "Both objects present during fam/hab",
                                   "Agent (self-propelled object)",
                                   "Unambiguous location or object goal"),
@@ -765,7 +768,7 @@ regressionplot2 <- sjPlot::plot_model(goals.m1.cooks.beta,
 
 summary(goals.m1.cooks)
 plot(allEffects(goals.m1.cooks))
-sjPlot:: tab_model(goals.m1.cooks, show.stat=TRUE)
+sjPlot:: tab_model(goals.m1.cooks.beta, show.stat=TRUE)
 
 goals.interventions.cooks<- cbind(
   gen.beta(effectsize::standardize(goals.m1.cooks)),
