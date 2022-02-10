@@ -45,7 +45,7 @@ ind.data.pre <- read.csv("./ma_study_data.csv", header=TRUE) %>%
          condition = MA_condition)%>%
   mutate_at(.vars="condition", .funs = tolower)
 
-ma.data <- read.csv("./ma_study_designs_updated.csv") %>%
+ma.data <- read.csv("./ma_study_designs.csv") %>%
   rename(paper = study_ID,
          condition = expt_condition,
          experiment = expt_num,
