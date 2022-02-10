@@ -26,9 +26,3 @@
 3. Follow MetaLab workflow - define research question, do a literature search etc (**by October 7**) (**DONE**)
 4. Generate final MA data (including codebook, PRISMA, meta-data) (**by October 12**)
 5. Double check everything, submit on October 15
-
-### December 1, 2020 - first draft of analysis plan, send to experts for review
-Experts to get feedback from: 
-- Mike Frank
-- Sho Tsuji
-- Christina Bergmann
