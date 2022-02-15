@@ -23,7 +23,7 @@ ipak <- function (pkg) {
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr", "ggResidpanel", "HLMdiag", "mixed", "sjPlot")
+packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr", "ggResidpanel", "HLMdiag", "mixed", "sjPlot", "effectsize")
 
 ipak(packages)
 
@@ -382,7 +382,7 @@ plot1 <- ggplot(ind.data.long,
   facet_wrap(~task+paper+condition, nrow=6, labeller=label_wrap_gen())+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2),
         legend.position="bottom")
-  
+
 plot1
 ```
 
@@ -463,7 +463,6 @@ constraints.baseline.data <- constraints %>%
   filter(condition %in% c("3_notraining",
                           "1_pickupglove",
                           "2_pickupbarehand"))
-
 
 constraints.b1 <- lmer(data = constraints.baseline.data,
                        formula = look_pref ~ 1 + ageday + (1|condition))
@@ -615,8 +614,77 @@ sjPlot:: tab_model(constraints.m1.cooks.beta, show.stat=TRUE)
 
 ```
 
+### Generating BFs
+
+```{r}
+constraints.full.cooks <- lmer(data = constraints.cooks,
+     formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper), REML=FALSE,control = lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=200000))) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
+
+constraints.predictors=c("training_yesno","action_causal","action_consequence","actor_hand","agent_efficient_fam","ageday")
+
+constraints.bf.cooks <- data.frame(constraints.predictors) %>%
+  mutate(BF.cooks = NA,
+         Interpretation.Cooks = NA) %>%
+  rename(Fixed.Effect = constraints.predictors)
+
+for (predictor in constraints.predictors) {
+  modelform <- update(constraints.full.cooks, as.formula(paste0(". ~ . -",predictor)))
+  BF <- exp((BIC(modelform) - BIC(constraints.full.cooks))/2)
+  whichrow <- which(constraints.bf.cooks$Fixed.Effect == as.character(predictor))
+  constraints.bf.cooks[whichrow,2] <- BF
+  constraints.bf.cooks[whichrow,3] <- interpret_bf(BF)
+}
+
+constraints.bf.cooks
+```
+
+```{r}
+constraints.full <- lmer(data = constraints,
+     formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper), REML=FALSE,control = lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=200000))) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
+
+constraints.predictors=c("training_yesno","action_causal","action_consequence","actor_hand","agent_efficient_fam","ageday")
+
+constraints.bf.full <- data.frame(constraints.predictors) %>%
+  mutate(BF = NA,
+         Interpretation = NA) %>%
+  rename(Fixed.Effect = constraints.predictors)
+
+for (predictor in constraints.predictors) {
+  modelform <- update(constraints.full, as.formula(paste0(". ~ . -",predictor)))
+  BF <- exp((BIC(modelform) - BIC(constraints.full))/2)
+  whichrow <- which(constraints.bf.full$Fixed.Effect == as.character(predictor))
+  constraints.bf.full[whichrow,2] <- BF
+  constraints.bf.full[whichrow,3] <- interpret_bf(BF)
+
+}
+
+constraints.bf.full
+```
+
+```{r}
+# combine BF tables
+constraints.bf <- full_join(constraints.bf.full, constraints.bf.cooks) %>%
+  arrange(desc(BF))
+```
+
+### Exploratory Analysis
+```{r, eval=FALSE}
+
+constraints.e1 <- lmer(data = constraints,
+     formula = look_pref ~ training_yesno + action_causal + action_consequence + agent_efficient_fam + (1+condition|paper))
+
+summary(constraints.e1)
+```
+
 
 When we compared the effects of different variants we found that motor training  increased infants' looking preference for the unexpected event (`r report(constraints.interventions,2,3,2)`). We also found that other interventions on the actions infants saw, including seeing an action that causes an effect on contact (`r report(constraints.interventions,3,3,2)`). We did not find an effect of age, `r report(constraints.interventions,8,3,2)`. This analysis included `r nrow(constraints)` total infants, `r nrow(constraints)-nrow(constraints.cooks)` of were classified as influential by Cook's Distance. When these influential participants were excluded from the analysis, we found qualitatively equivalent results, except that the effect of seeing an action that resulted in a state change (versus location change) crossed the threshold into significance (`r report(constraints.interventions.cooks,4,3,2)`). 
+
+The presence or absence of a significant fixed effect in a frequentist setting does not map directly to strength of evidence for that fixed effect. Thus, we computed Bayes Factors for each of these fixed effects, which expresses the strength of evidence for the H0 (i.e. the hypothesis that the fixed effect has no predictive power in the model) versus H1 (i.e. the hypothesis that the fixed effect has predictive power in the model).  For the full model `look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper)`, excluding influential observations, we iteratively refit the model excluding each fixed effect, and computed the Bayes Factor that expresses the strength of evidence for the full model vs the model excluding this predictor. We used model BICs to compute Bayes Factors using the following formula `exp((BIC(modelminusfixedeffect) - BIC(fullmodel))/2)` (Wagenmakers, 2007). The Bayes Factor associated with each fixed effect is shown in Table X. There was very strong evidence that seeing a causal action predicted infants' responses at test (BF = `r constraints.bf %>% filter(Fixed.Effect =="action_causal") %>% select(BF) %>% as.numeric()`). There was moderate evidence for the hypothesis that sticky mittens training (BF = `r constraints.bf %>% filter(Fixed.Effect =="training_yesno") %>% select(BF) %>% as.numeric()`), and seeing an efficient agent initially (BF = `r constraints.bf %>% filter(Fixed.Effect =="agent_efficient_fam") %>% select(BF) %>% as.numeric()`), predicted infants' violation-of-expectation responses at test. There was moderate for the null hypothesis (i.e. for the absence of this effect) for the predictors of seeing a state change vs pickup action (BF = `r constraints.bf %>% filter(Fixed.Effect =="action_consequence") %>% select(BF) %>% as.numeric()`), and strong evidence for the null hypothesis that seeing bare vs gloved vs mittened hands (BF = `r constraints.bf %>% filter(Fixed.Effect =="actor_hand") %>% select(BF) %>% as.numeric()`), and infant age (BF = `r constraints.bf %>% filter(Fixed.Effect =="ageday") %>% select(BF) %>% as.numeric()`) affected infants' looking preference at test.
+
+
+```{r}
+knitr::kable(constraints.bf)
+```
 
 ## Goals Task
 ### Baseline Effect
@@ -782,6 +850,167 @@ goals.interventions.cooks<- cbind(
 (regressionplot1 | regressionplot2) + plot_annotation(tag_levels = 'A')
 ```
 
+
+### Generating BFs
+
+```{r}
+goals.full <- lmer(data = goals,
+     formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper), REML=FALSE,
+     control = lmerControl(optimizer="Nelder_Mead")) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
+
+goals.predictors=c("training_yesno","action_consequence","location_object_goal_ambiguous","agent","bothobjects_present_visible_fam","ageday")
+
+goals.bf.full <- data.frame(goals.predictors) %>%
+  mutate(BF = NA,
+         Interpretation = NA) %>%
+  rename(Fixed.Effect = goals.predictors)
+
+for (predictor in goals.predictors) {
+  modelform <- update(goals.full, as.formula(paste0(". ~ . -",predictor)))
+  BF <- exp((BIC(modelform) - BIC(goals.full))/2)
+  whichrow <- which(goals.bf.full$Fixed.Effect == as.character(predictor))
+  goals.bf.full[whichrow,2] <- BF
+  goals.bf.full[whichrow,3] <-interpret_bf(BF)
+}
+
+goals.bf.full
+```
+
+```{r}
+goals.full.cooks <- lmer(data = goals.cooks,
+     formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper), REML=FALSE,
+     control = lmerControl(optimizer="Nelder_Mead")) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
+
+goals.predictors=c("training_yesno","action_consequence","location_object_goal_ambiguous","agent","bothobjects_present_visible_fam","ageday")
+
+goals.bf.cooks <- data.frame(goals.predictors) %>%
+  mutate(BF.cooks = NA,
+         Interpretation.cooks = NA) %>%
+  rename(Fixed.Effect = goals.predictors)
+
+for (predictor in goals.predictors) {
+  modelform <- update(goals.full.cooks, as.formula(paste0(". ~ . -",predictor)))
+  BF <- exp((BIC(modelform) - BIC(goals.full.cooks))/2)
+  whichrow <- which(goals.bf.cooks$Fixed.Effect == as.character(predictor))
+  goals.bf.cooks[whichrow,2] <- BF
+  goals.bf.cooks[whichrow,3] <- interpret_bf(BF)
+}
+
+goals.bf.cooks
+```
+
+```{r}
+goals.bf <- full_join(goals.bf.full, goals.bf.cooks) %>%
+    arrange(desc(BF))
+
+knitr::kable(goals.bf)
+```
+
+We again computed Bayes Factors for each of the fixed effects, which expresses the strength of evidence for the H0 (i.e. the hypothesis that the fixed effect has no predictive power in the model) versus H1 (i.e. the hypothesis that the fixed effect has predictive power in the model). The Bayes Factor associated with each fixed effect is shown in Table X. There was anecdotal evidence that seeing an unambiguous object or location goal  (BF = `r goals.bf %>% filter(Fixed.Effect =="location_object_goal_ambiguous") %>% select(BF) %>% as.numeric()`), and seeing both objects during familiarization or habituation  (BF = `r goals.bf %>% filter(Fixed.Effect =="bothobjects_present_visible_fam") %>% select(BF) %>% as.numeric()`), influenced infants' responses at test. There was moderate evidence against the hypotheses that action training (BF = `r goals.bf %>% filter(Fixed.Effect =="training_yesno") %>% select(BF) %>% as.numeric()`), action consequence  (BF = `r goals.bf %>% filter(Fixed.Effect =="action_consequence") %>% select(BF) %>% as.numeric()`), type of agent (BF = `r goals.bf %>% filter(Fixed.Effect =="agent") %>% select(BF) %>% as.numeric()`), and infant age (BF = `r goals.bf %>% filter(Fixed.Effect =="ageday") %>% select(BF) %>% as.numeric()`), influenced infants' looking preferences.
+
+### Exploratory Analysis
+```{r, eval=FALSE}
+library(rstan)
+library(brms)
+goals.e1 <- brm(formula = look_pref ~ training_yesno + (1+condition|paper),
+                data= goals, 
+                warmup = 100, 
+                iter   = 200, 
+                chains = 2, 
+                inits  = "random",
+                cores  = 2,
+                save_all_pars = TRUE)
+summary(goals.e1)
+
+goals.e2 <- brm(formula = look_pref ~ 1 + (1+condition|paper),
+                data= goals, 
+                warmup = 100, 
+                iter   = 200, 
+                chains = 2, 
+                inits  = "random",
+                cores  = 2,
+                save_all_pars = TRUE)
+summary(goals.e2)
+
+bayes_factor(goals.e1, goals.e2)
+
+
+goals.full <- lmer(data = goals,
+     formula = look_pref ~ training_yesno + (1+training_yesno|paper))
+goals.null <- lmer(data = goals,
+     formula = look_pref ~ 1 + (1|paper))
+
+exp((BIC(goals.null) - BIC(goals.full))/2)
+
+goals.full <- lmer(data = goals,
+     formula = look_pref ~ location_object_goal_ambiguous + (1|paper))
+goals.null <- lmer(data = goals,
+     formula = look_pref ~ 1 + (1|paper))
+exp((BIC(goals.null) - BIC(goals.full))/2)
+```
+
+
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
 
 When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (marginal effect, `r report(goals.interventions,4,3,2)`), or presenting a self-propelled object (marginal effect, `r report(goals.interventions,5,3,2)`) or an entire person (`r report(goals.interventions,6,3,2)`), relative to seeing a hand appear from off-stage, increased infants' looking preference for the unexpected event. We did not find any other effects, including age, motor training, or action consequences, when taking into account all of these predictors in the same model. We did not find an effect of age, `r report(goals.interventions,8,3,2)`. These analyses included `r nrow(goals)` total infants, `r nrow(goals)-nrow(goals.cooks)` of whom were classified as influential based on Cook's Distance. Excluding these influential participants in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into significance (`r report(goals.interventions.cooks,4,3,2)`), and the two effects of the agent type crossed the threshold out of significance (marginal effect of object, `r report(goals.interventions.cooks,5,3,2)`; non-significant effect of entire person, `r report(goals.interventions.cooks,6,3,2)`).
+
+
+# Exploratory Analysis
+## Visualization
+```{r}
+ind.data.long <- ind.data %>%
+  gather(look_type, look_sec, unexp_look:exp_look) %>%
+  mutate(look_log = log(look_sec))
+
+(eplot1 <- ggplot(ind.data, aes(x = log(exp_look), y=log(unexp_look))) +
+    geom_point()) +
+  geom_smooth()+
+  facet_wrap(paper~PI_group)
+
+(eplot2 <- ggplot(ind.data.long, aes(x = ageday, y=look_log)) +
+    geom_point() +
+    geom_smooth(method = "lm")+
+  facet_wrap(look_type~action_causal))
+
+```
+
+## Impute Sommerville Data
+```{r}
+library(mice)
+set.seed(429)
+
+# 0_pilotnotraining
+# n = 16, mean age = 106.54
+# UNEXP, M = 53.9, SD = 14.9
+# EXP, M = 47.1, SD = 12.4
+
+# 1_watchfirst
+# n = 15, mean age = 101.32
+# UNEXP, M = 33.781, SD = 7.283212518
+# EXP, M = 33.417, SD = 4.740388137
+# t = 0.9
+
+# 1_reachfirst
+# n = 15, mean age = 104.32
+# UNEXP, M = 53.992, SD = 11.10689909
+# EXP, M = 30.504, SD = 4.369927511
+# t = 2.6
+
+ind.data.long %>%
+  filter(PI_group=="woodward") %>%
+  ggplot(aes(look_sec)) +
+  geom_histogram()
+
+v1 <- rlnorm(16, meanlog=3.987, sdlog=.25)
+mean(v1)
+sd(v1)
+
+v2 <- rlnorm(16, meanlog=3.852, sdlog=.24)
+mean(v2)
+sd(v2)
+
+ind.data.long$look_log
+
+t.test(v1,v2, paired = TRUE)
+```
+
