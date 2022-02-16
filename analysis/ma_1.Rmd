@@ -667,14 +667,6 @@ constraints.bf <- full_join(constraints.bf.full, constraints.bf.cooks) %>%
   arrange(desc(BF))
 ```
 
-### Exploratory Analysis
-```{r, eval=FALSE}
-
-constraints.e1 <- lmer(data = constraints,
-     formula = look_pref ~ training_yesno + action_causal + action_consequence + agent_efficient_fam + (1+condition|paper))
-
-summary(constraints.e1)
-```
 
 
 When we compared the effects of different variants we found that motor training  increased infants' looking preference for the unexpected event (`r report(constraints.interventions,2,3,2)`). We also found that other interventions on the actions infants saw, including seeing an action that causes an effect on contact (`r report(constraints.interventions,3,3,2)`). We did not find an effect of age, `r report(constraints.interventions,8,3,2)`. This analysis included `r nrow(constraints)` total infants, `r nrow(constraints)-nrow(constraints.cooks)` of were classified as influential by Cook's Distance. When these influential participants were excluded from the analysis, we found qualitatively equivalent results, except that the effect of seeing an action that resulted in a state change (versus location change) crossed the threshold into significance (`r report(constraints.interventions.cooks,4,3,2)`). 
@@ -908,47 +900,6 @@ knitr::kable(goals.bf)
 
 We again computed Bayes Factors for each of the fixed effects, which expresses the strength of evidence for the H0 (i.e. the hypothesis that the fixed effect has no predictive power in the model) versus H1 (i.e. the hypothesis that the fixed effect has predictive power in the model). The Bayes Factor associated with each fixed effect is shown in Table X. There was anecdotal evidence that seeing an unambiguous object or location goal  (BF = `r goals.bf %>% filter(Fixed.Effect =="location_object_goal_ambiguous") %>% select(BF) %>% as.numeric()`), and seeing both objects during familiarization or habituation  (BF = `r goals.bf %>% filter(Fixed.Effect =="bothobjects_present_visible_fam") %>% select(BF) %>% as.numeric()`), influenced infants' responses at test. There was moderate evidence against the hypotheses that action training (BF = `r goals.bf %>% filter(Fixed.Effect =="training_yesno") %>% select(BF) %>% as.numeric()`), action consequence  (BF = `r goals.bf %>% filter(Fixed.Effect =="action_consequence") %>% select(BF) %>% as.numeric()`), type of agent (BF = `r goals.bf %>% filter(Fixed.Effect =="agent") %>% select(BF) %>% as.numeric()`), and infant age (BF = `r goals.bf %>% filter(Fixed.Effect =="ageday") %>% select(BF) %>% as.numeric()`), influenced infants' looking preferences.
 
-### Exploratory Analysis
-```{r, eval=FALSE}
-library(rstan)
-library(brms)
-goals.e1 <- brm(formula = look_pref ~ training_yesno + (1+condition|paper),
-                data= goals, 
-                warmup = 100, 
-                iter   = 200, 
-                chains = 2, 
-                inits  = "random",
-                cores  = 2,
-                save_all_pars = TRUE)
-summary(goals.e1)
-
-goals.e2 <- brm(formula = look_pref ~ 1 + (1+condition|paper),
-                data= goals, 
-                warmup = 100, 
-                iter   = 200, 
-                chains = 2, 
-                inits  = "random",
-                cores  = 2,
-                save_all_pars = TRUE)
-summary(goals.e2)
-
-bayes_factor(goals.e1, goals.e2)
-
-
-goals.full <- lmer(data = goals,
-     formula = look_pref ~ training_yesno + (1+training_yesno|paper))
-goals.null <- lmer(data = goals,
-     formula = look_pref ~ 1 + (1|paper))
-
-exp((BIC(goals.null) - BIC(goals.full))/2)
-
-goals.full <- lmer(data = goals,
-     formula = look_pref ~ location_object_goal_ambiguous + (1|paper))
-goals.null <- lmer(data = goals,
-     formula = look_pref ~ 1 + (1|paper))
-exp((BIC(goals.null) - BIC(goals.full))/2)
-```
-
 
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
 
@@ -973,6 +924,75 @@ ind.data.long <- ind.data %>%
   facet_wrap(look_type~action_causal))
 
 ```
+
+## Various attempts to make the frequentist setting work (not successful)
+```{r, eval=FALSE}
+
+# trying to figure out whether random slopes are possible in the frequentist setting
+constraints.e1 <- lmer(data = constraints,
+     formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday)  + (1+experiment|paper), 
+     control = lmerControl(optimizer="bobyqa"))
+
+summary(constraints.e1)
+
+
+cooks.constraints.e1 <- cooks.distance(constraints.e1, group = "subj")
+dotplot_diag(x = cooks.constraints.e1, cutoff = "internal", name = "cooks.distance",  index=constraints$subj) + ylab("Cook's distance") + xlab("subjID")
+
+constraints.e1.cooks <- constraints[which(cooks.constraints.e1 <= 4/264),]
+
+constraints.e1.aftercooks <- lmer(data = constraints.e1.cooks,
+     formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday)  + (1+experiment|paper), 
+     control = lmerControl(optimizer="bobyqa"))
+
+summary(constraints.e1.aftercooks)
+
+# try other optimizers
+constraints.e1.all <- allFit(constraints.e1)
+summary(constraints.e1.all)
+```
+
+```{r, eval=FALSE}
+constraints.full.e1 <- lmer(data = constraints,
+     formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday) + (1+experiment|paper), REML=FALSE, lmerControl(optimizer="bobyqa")) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
+
+constraints.predictors=c("training_yesno","action_causal","action_consequence","actor_hand","agent_efficient_fam","ageday")
+
+constraints.bf.e1 <- data.frame(constraints.predictors) %>%
+  mutate(BF.cooks = NA,
+         Interpretation.Cooks = NA) %>%
+  rename(Fixed.Effect = constraints.predictors)
+
+for (predictor in constraints.predictors) {
+  modelform <- update(constraints.full.e1, as.formula(paste0(". ~ . -",predictor)))
+  BF <- exp((BIC(modelform) - BIC(constraints.full.e1))/2)
+  whichrow <- which(constraints.bf.e1$Fixed.Effect == as.character(predictor))
+  constraints.bf.e1[whichrow,2] <- BF
+  constraints.bf.e1[whichrow,3] <- interpret_bf(BF)
+}
+
+constraints.bf.e1
+```
+
+```{r, eval=FALSE}
+# trying to figure out whether random slopes are possible in the frequentist setting
+goals.e1 <- lmer(data = goals,
+     formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam +  scale(ageday)  + (1+experiment|paper), 
+     control = lmerControl(optimizer="Nelder_Mead"))
+
+cooks.goals.e1 <- cooks.distance(goals.e1, group = "subj")
+dotplot_diag(x = cooks.goals.e1, cutoff = "internal", name = "cooks.distance",  index=goals$subj) + ylab("Cook's distance") + xlab("subjID")
+
+goals.e1.cooks <- goals[which(cooks.goals.e1 <= 4/386),]
+
+goals.e1.aftercooks <- lmer(data = goals.e1.cooks,
+     formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam +  scale(ageday)  + (1+experiment|paper), 
+     control = lmerControl(optimizer="Nelder_Mead"))
+
+summary(goals.e1.aftercooks)
+plot(allEffects(goals.e1.aftercooks))
+```
+
 
 ## Impute Sommerville Data
 ```{r}
@@ -1012,5 +1032,63 @@ sd(v2)
 ind.data.long$look_log
 
 t.test(v1,v2, paired = TRUE)
+```
+
+## BRMS
+In the primary analysis, we chose to pare down the random effects structure to just random intercepts for conditions, experiments, and papers, in order to deal with issues of convergence. Nevertheless, such an analytical choice neglects the correlated methodological decisions shared by conditions and experiments within papers, and leaves open the possibility that some of the effects we fit were driven by just a few conditions. When we explored ways of fitting frequentist models with alternative ways of specifying the random effects, and iteratively computing Bayes Factors like we did above, we never found a set of optimiziers and random effects specifications that consistently converged. Thus, for an exploratory analysis we decided to refit the models from the confirmatory analysis with the full random effects structure using brms. 
+
+```{r, eval=FALSE}
+library(rstan)
+library(brms)
+library(performance)
+library(see)
+constraints.brms.intercept <- brm(formula = look_pref ~ 1 + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
+                data= constraints, 
+                warmup = 100, 
+                iter   = 200, 
+                chains = 2, 
+                cores  = 2,
+                seed = 429,
+                save_all_pars = TRUE,
+                sample_prior = TRUE)
+pp_check(constraints.brms.intercept)
+check_model(constraints.brms.intercept)
+summary(constraints.brms.intercept)
+
+constraints.brms.full <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
+                data= constraints, 
+                warmup = 100, 
+                iter   = 200, 
+                chains = 2, 
+                inits  = "random",
+                cores  = 2,
+                save_all_pars = TRUE)
+summary(goals.e1)
+
+goals.e2 <- brm(formula = look_pref ~ 1 + (1+condition|paper),
+                data= goals, 
+                warmup = 100, 
+                iter   = 200, 
+                chains = 2, 
+                inits  = "random",
+                cores  = 2,
+                save_all_pars = TRUE)
+summary(goals.e2)
+
+bayes_factor(goals.e1, goals.e2)
+
+
+goals.full <- lmer(data = goals,
+     formula = look_pref ~ training_yesno + (1+training_yesno|paper))
+goals.null <- lmer(data = goals,
+     formula = look_pref ~ 1 + (1|paper))
+
+exp((BIC(goals.null) - BIC(goals.full))/2)
+
+goals.full <- lmer(data = goals,
+     formula = look_pref ~ location_object_goal_ambiguous + (1|paper))
+goals.null <- lmer(data = goals,
+     formula = look_pref ~ 1 + (1|paper))
+exp((BIC(goals.null) - BIC(goals.full))/2)
 ```
 
