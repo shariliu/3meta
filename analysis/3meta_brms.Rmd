@@ -35,12 +35,30 @@ library("dplyr")
 ```
 
 ```{r}
-ind.data <- read.csv("./fulldata.csv", header=TRUE)
+ind.data.init <- read.csv("./fulldata.csv", header=TRUE)
+str(ind.data.init)
+num_cols <- c("ageday", "exp_look", "unexp_look", "look_pref")
+factor_cols <- setdiff(colnames(ind.data.init), num_cols)
+
+ind.data <- ind.data.init %>%
+  mutate_at(factor_cols,as.factor)
 str(ind.data)
 
 constraints <- ind.data %>% filter(task =="constraints")
 goals <- ind.data %>% filter(task =="goals")
+constraints <- ind.data %>% filter(task =="constraints")
 
+# checking ref levels for all factors
+constraints$actor_hand <- factor(constraints$actor_hand, levels=c("bare", "gloved", "mittened")) # for summed contr last level is dropped
+constraints$action_consequence <- relevel(constraints$action_consequence, ref = "state_change")
+constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "yes")
+constraints$training_yesno <- relevel(constraints$training_yesno, ref = "yes")
+constraints$action_causal <- relevel(constraints$action_causal, ref = "yes")
+
+goals$action_consequence <- relevel(goals$action_consequence, ref = "none")
+goals$agent <- factor(goals$agent, levels=c("object", "person", "hand")) # last level gets dropped in model estimates
+goals$training_yesno <- relevel(goals$training_yesno, ref = "yes")
+goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visible_fam, ref = "yes")
 ```
 
 ## Various attempts to make the frequentist setting work (not successful)
@@ -152,37 +170,28 @@ t.test(v1,v2, paired = TRUE)
 ## BRMS
 In the primary analysis, we chose to pare down the random effects structure to just random intercepts for conditions, experiments, and papers, in order to deal with issues of convergence. Nevertheless, such an analytical choice neglects the correlated methodological decisions shared by conditions and experiments within papers, and leaves open the possibility that some of the effects we fit were driven by just a few conditions. When we explored ways of fitting frequentist models with alternative ways of specifying the random effects, and iteratively computing Bayes Factors like we did above, we never found a set of optimizers and random effects specifications that consistently converged. Thus, for an exploratory analysis we decided to refit the models from the confirmatory analysis with the full random effects structure using brms. 
 
+### Constraints Task
 ```{r, eval=FALSE}
 hist(constraints$look_pref)
 
-constraints.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
-                data= constraints, 
-                warmup = 1000, 
-                iter   = 2000, 
-                family = gaussian(link="identity"),
-                chains = 4, 
-                cores  = 2,
-                seed = 429,
-                save_all_pars = TRUE,
-                sample_prior = TRUE,
-                control = list(adapt_delta = .95))
+##  not run, uncomment to reproduce results
+# constraints.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
+#                 data= constraints, 
+#                 warmup = 1000, 
+#                 iter   = 5000, 
+#                 family = gaussian(link="identity"),
+#                 chains = 6, 
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
 
-stancode(constraints.brms.intercept)
-standata(constraints.brms.intercept)
+constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
 shinystan::launch_shinystan(constraints.brms.intercept)
 summary(constraints.brms.intercept)
-
 hypothesis(constraints.brms.intercept, "Intercept > 0", alpha=.05)
-
-constraints.brms.full <- update(constraints.brms.intercept, 
-                                newdata = constraints,
-                                formula. = ~ . +  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam)
-shinystan::launch_shinystan(constraints.brms.full)
-summary(constraints.brms.full)
-
-constraints.brms.full.simplerfx <- update(constraints.brms.full, 
-                                formula. = ~. + (1 | experiment) + (1 | paper))
-getCall(constraints.brms.full)
 
 hypothesis_vector <- c("ageday > 0",
                        "training_yesno1 > 0",
@@ -192,8 +201,34 @@ hypothesis_vector <- c("ageday > 0",
                        "actor_hand2 > 0", 
                        "agent_efficient_fam1 > 0"
             )
-  
+# constraints.brms.full <- update(constraints.brms.intercept,
+#                                 newdata = constraints,
+#                                 formula. = ~ . +  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam)
+# saveRDS(constraints.brms.full,file="constraints.brms.full.rds")
+constraints.brms.full <- readRDS("constraints.brms.full.rds")
+shinystan::launch_shinystan(constraints.brms.full)
+summary(constraints.brms.full)
+
 hypothesis(constraints.brms.full, hypothesis_vector, seed = 429, alpha=.05)
 
+# constraints.brms.full.simplerfx <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
+#                 data= constraints,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
+constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
+shinystan::launch_shinystan(constraints.brms.full.simplerfx)
+
+constraints.results.full <- hypothesis(constraints.brms.full, hypothesis_vector, seed = 429, alpha=.05) 
+constraints.results.simplerfx <- hypothesis(constraints.brms.full.simplerfx, hypothesis_vector, seed = 429, alpha=.05)
+
 ```
+
 
