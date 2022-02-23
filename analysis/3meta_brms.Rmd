@@ -231,4 +231,59 @@ constraints.results.simplerfx <- hypothesis(constraints.brms.full.simplerfx, hyp
 
 ```
 
+```{r}
+#  not run, uncomment to reproduce results
+# goals.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
+#                 data= goals,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(goals.brms.intercept,file="goals.brms.intercept.rds")
+goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
+shinystan::launch_shinystan(goals.brms.intercept)
+summary(goals.brms.intercept)
+hypothesis(goals.brms.intercept, "Intercept > 0", alpha=.05)
+
+hypothesis_vector <- c("ageday > 0",
+                       "training_yesno1 > 0",
+                       "location_object_goal_ambiguous1 > 0",
+                       "action_consequence1 > 0",
+                       "agent1 > 0",
+                       "agent2 > 0", 
+                       "bothobjects_present_visible_fam1 > 0"
+            )
+
+# goals.brms.full <- update(goals.brms.intercept,
+#                                 newdata = goals,
+#                                 formula. = ~ . +  training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous)
+# saveRDS(goals.brms.full,file="goals.brms.full.rds")
+shinystan::launch_shinystan(goals.brms.full)
+summary(goals.brms.full)
+hypothesis(goals.brms.full, hypothesis_vector, seed = 429, alpha=.05) 
+
+
+# goals.brms.full.simplefx  <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1|experiment) + (1|paper),
+#                 data= goals,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
+shinystan::launch_shinystan(goals.brms.full.simplefx)
+summary(goals.brms.full.simplefx)
+
+hypothesis(goals.brms.full.simplefx, hypothesis_vector, seed = 429, alpha=.05) 
+
+```
 
