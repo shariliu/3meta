@@ -190,6 +190,7 @@ report.brms <- function(df, index, places) {
 }
 ```
 
+
 ### Constraints Task
 ```{r, eval=FALSE}
 hist(constraints$look_pref)
@@ -245,12 +246,24 @@ constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraint
 #                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
 constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
-shinystan::launch_shinystan(constraints.brms.full.simplerfx)
+# shinystan::launch_shinystan(constraints.brms.full.simplerfx)
 
 constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
+
+constraints.brms.full.simplefx <- add_criterion(constraints.brms.full.simplerfx, "waic")
+constraints.brms.full <- add_criterion(constraints.brms.full, "waic")
+
+(constraints.compare.rfx <- bayes_factor(constraints.brms.full.simplefx, constraints.brms.full))
+(constraints.compare.rfx.loo <- loo_compare(constraints.brms.full.simplerfx, goals.brms.full, criterion = "waic"))
+(constraints.compare.rfx.loo2 <- LOO(constraints.brms.full.simplefx, constraints.brms.full))
 ```
 
+```{r, eval=FALSE}
+knitr::kable(constraints.brms.full.results)
+knitr::kable(constraints.brms.full.simplerfx.results)
+```
 
+### Goals Task
 ```{r}
 #  not run, uncomment to reproduce results
 # goals.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
@@ -308,14 +321,16 @@ summary(goals.brms.full.simplefx)
 
 goals.brms.full.simplefx.results <- brms.test.hyp(goals.brms.full.simplefx, goals_hypothesis_vector)
 
-bf(goals.brms.full.simplefx, goals.brms.full)
+goals.brms.full.simplefx <- add_criterion(goals.brms.full.simplefx, "waic")
+goals.brms.full <- add_criterion(goals.brms.full, "waic")
 
+(goals.compare.rfx <- bayes_factor(goals.brms.full.simplefx, goals.brms.full))
+(goals.compare.rfx.loo <- loo_compare(goals.brms.full.simplefx, goals.brms.full, criterion = "waic"))
+(goals.compare.rfx.loo2 <- LOO(goals.brms.full.simplefx, goals.brms.full))
 ```
 
 
 ```{r}
-knitr::kable(constraints.brms.full.results)
-knitr::kable(constraints.brms.full.simplerfx.results)
 knitr::kable(goals.brms.full.results)
 knitr::kable(goals.brms.full.simplefx.results)
 ```
