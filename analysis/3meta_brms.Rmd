@@ -2,7 +2,9 @@
 title: "3meta BRMS"
 author: "Shari Liu"
 date: "2/22/2022"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -129,6 +131,7 @@ summary(goals.e1.aftercooks)
 plot(allEffects(goals.e1.aftercooks))
 ```
 
+
 ## Impute Sommerville Data
 ```{r}
 
@@ -136,6 +139,14 @@ plot(allEffects(goals.e1.aftercooks))
 # n = 16, mean age = 106.54
 # UNEXP, M = 53.9, SD = 14.9
 # EXP, M = 47.1, SD = 12.4
+
+sommerville0.unexp <- rlnorm(16, meanlog=3.987, sdlog=.25)
+mean(sommerville0.unexp)
+sd(sommerville0.unexp)
+
+sommerville0.exp <- rlnorm(16, meanlog=3.850, sdlog=.25)
+mean(sommerville0.exp)
+sd(sommerville0.exp)
 
 # 1_watchfirst
 # n = 15, mean age = 101.32
@@ -149,26 +160,35 @@ plot(allEffects(goals.e1.aftercooks))
 # EXP, M = 30.504, SD = 4.369927511
 # t = 2.6
 
-ind.data.long %>%
-  filter(PI_group=="woodward") %>%
-  ggplot(aes(look_sec)) +
-  geom_histogram()
-
-v1 <- rlnorm(16, meanlog=3.987, sdlog=.25)
-mean(v1)
-sd(v1)
-
-v2 <- rlnorm(16, meanlog=3.852, sdlog=.24)
-mean(v2)
-sd(v2)
-
-ind.data.long$look_log
-
-t.test(v1,v2, paired = TRUE)
 ```
 
 ## BRMS
 In the primary analysis, we chose to pare down the random effects structure to just random intercepts for conditions, experiments, and papers, in order to deal with issues of convergence. Nevertheless, such an analytical choice neglects the correlated methodological decisions shared by conditions and experiments within papers, and leaves open the possibility that some of the effects we fit were driven by just a few conditions. When we explored ways of fitting frequentist models with alternative ways of specifying the random effects, and iteratively computing Bayes Factors like we did above, we never found a set of optimizers and random effects specifications that consistently converged. Thus, for an exploratory analysis we decided to refit the models from the confirmatory analysis with the full random effects structure using brms. 
+
+
+```{r}
+brms.test.hyp <- function(model, hyp.vector) {
+  results <- hypothesis(model, hyp.vector, seed = 429, alpha=.05)[[1]]
+  return(results)
+}
+
+# function that returns formatted result from a brms.test.hyp df
+report.brms <- function(df, index, places) {
+  "Estimate = xx [xx, xx], Evidence Ratio = xx, Posterior Probability = xx"
+  result <- paste("Estimate=", 
+                  round(df$Estimate[index], places),
+                  " [",
+                  round(df$CI.Lower[index], places),
+                  ", ",
+                  round(df$CI.Upper[index], places),
+                  "], Evidence Ratio=",
+                  round(df$Evid.Ratio[index], places),
+                  ", Posterior Probability=",
+                  round(df$Post.Prob[index], places),
+                  sep = "")
+  return(result)
+}
+```
 
 ### Constraints Task
 ```{r, eval=FALSE}
@@ -189,11 +209,12 @@ hist(constraints$look_pref)
 # saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
 
 constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
-shinystan::launch_shinystan(constraints.brms.intercept)
+# shinystan::launch_shinystan(constraints.brms.intercept)
 summary(constraints.brms.intercept)
+
 hypothesis(constraints.brms.intercept, "Intercept > 0", alpha=.05)
 
-hypothesis_vector <- c("ageday > 0",
+constraints_hypothesis_vector <- c("ageday > 0",
                        "training_yesno1 > 0",
                        "action_causal1 > 0",
                        "action_consequence1 > 0",
@@ -206,10 +227,10 @@ hypothesis_vector <- c("ageday > 0",
 #                                 formula. = ~ . +  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam)
 # saveRDS(constraints.brms.full,file="constraints.brms.full.rds")
 constraints.brms.full <- readRDS("constraints.brms.full.rds")
-shinystan::launch_shinystan(constraints.brms.full)
+# shinystan::launch_shinystan(constraints.brms.full)
 summary(constraints.brms.full)
 
-hypothesis(constraints.brms.full, hypothesis_vector, seed = 429, alpha=.05)
+constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
 
 # constraints.brms.full.simplerfx <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
 #                 data= constraints,
@@ -226,10 +247,9 @@ hypothesis(constraints.brms.full, hypothesis_vector, seed = 429, alpha=.05)
 constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
 shinystan::launch_shinystan(constraints.brms.full.simplerfx)
 
-constraints.results.full <- hypothesis(constraints.brms.full, hypothesis_vector, seed = 429, alpha=.05) 
-constraints.results.simplerfx <- hypothesis(constraints.brms.full.simplerfx, hypothesis_vector, seed = 429, alpha=.05)
-
+constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
 ```
+
 
 ```{r}
 #  not run, uncomment to reproduce results
@@ -246,11 +266,11 @@ constraints.results.simplerfx <- hypothesis(constraints.brms.full.simplerfx, hyp
 #                 control = list(adapt_delta = .98))
 # saveRDS(goals.brms.intercept,file="goals.brms.intercept.rds")
 goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
-shinystan::launch_shinystan(goals.brms.intercept)
+# shinystan::launch_shinystan(goals.brms.intercept)
 summary(goals.brms.intercept)
 hypothesis(goals.brms.intercept, "Intercept > 0", alpha=.05)
 
-hypothesis_vector <- c("ageday > 0",
+goals_hypothesis_vector <- c("ageday < 0",
                        "training_yesno1 > 0",
                        "location_object_goal_ambiguous1 > 0",
                        "action_consequence1 > 0",
@@ -263,9 +283,11 @@ hypothesis_vector <- c("ageday > 0",
 #                                 newdata = goals,
 #                                 formula. = ~ . +  training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous)
 # saveRDS(goals.brms.full,file="goals.brms.full.rds")
-shinystan::launch_shinystan(goals.brms.full)
+goals.brms.full <- readRDS("goals.brms.full.rds")
+# shinystan::launch_shinystan(goals.brms.full)
 summary(goals.brms.full)
-hypothesis(goals.brms.full, hypothesis_vector, seed = 429, alpha=.05) 
+
+goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
 
 
 # goals.brms.full.simplefx  <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1|experiment) + (1|paper),
@@ -279,11 +301,22 @@ hypothesis(goals.brms.full, hypothesis_vector, seed = 429, alpha=.05)
 #                 save_all_pars = TRUE,
 #                 sample_prior = TRUE,
 #                 control = list(adapt_delta = .98))
-saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
-shinystan::launch_shinystan(goals.brms.full.simplefx)
+# saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
+goals.brms.full.simplefx <- readRDS("goals.brms.full.simplefx.rds")
+# shinystan::launch_shinystan(goals.brms.full.simplefx)
 summary(goals.brms.full.simplefx)
 
-hypothesis(goals.brms.full.simplefx, hypothesis_vector, seed = 429, alpha=.05) 
+goals.brms.full.simplefx.results <- brms.test.hyp(goals.brms.full.simplefx, goals_hypothesis_vector)
 
+bf(goals.brms.full.simplefx, goals.brms.full)
+
+```
+
+
+```{r}
+knitr::kable(constraints.brms.full.results)
+knitr::kable(constraints.brms.full.simplerfx.results)
+knitr::kable(goals.brms.full.results)
+knitr::kable(goals.brms.full.simplefx.results)
 ```
 
