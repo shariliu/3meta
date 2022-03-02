@@ -33,7 +33,6 @@ options(contrasts = c("contr.sum", "contr.poly"))
 # fix bs with dplyr 
 detach("package:dplyr", unload = TRUE)
 library("dplyr")
-
 ```
 
 ```{r import.data, eval=FALSE}
@@ -911,22 +910,4 @@ We note that the analysis we reported deviates from our pre-registration plan. I
 When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (marginal effect, `r report(goals.interventions,4,3,2)`), or presenting a self-propelled object (marginal effect, `r report(goals.interventions,5,3,2)`) or an entire person (`r report(goals.interventions,6,3,2)`), relative to seeing a hand appear from off-stage, increased infants' looking preference for the unexpected event. We did not find any other effects, including age, motor training, or action consequences, when taking into account all of these predictors in the same model. We did not find an effect of age, `r report(goals.interventions,8,3,2)`. These analyses included `r nrow(goals)` total infants, `r nrow(goals)-nrow(goals.cooks)` of whom were classified as influential based on Cook's Distance. Excluding these influential participants in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into significance (`r report(goals.interventions.cooks,4,3,2)`), and the two effects of the agent type crossed the threshold out of significance (marginal effect of object, `r report(goals.interventions.cooks,5,3,2)`; non-significant effect of entire person, `r report(goals.interventions.cooks,6,3,2)`).
 
 
-# Exploratory Analysis
-## Visualization
-```{r}
-ind.data.long <- ind.data %>%
-  gather(look_type, look_sec, unexp_look:exp_look) %>%
-  mutate(look_log = log(look_sec))
-
-(eplot1 <- ggplot(ind.data, aes(x = log(exp_look), y=log(unexp_look))) +
-    geom_point()) +
-  geom_smooth()+
-  facet_wrap(paper~PI_group)
-
-(eplot2 <- ggplot(ind.data.long, aes(x = ageday, y=look_log)) +
-    geom_point() +
-    geom_smooth(method = "lm")+
-  facet_wrap(look_type~action_causal))
-
-```
 
