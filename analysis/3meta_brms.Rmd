@@ -279,6 +279,90 @@ report.brms <- function(df, index, places) {
 ```
 
 
+
+
+### Goals Task
+```{r}
+#  not run, uncomment to reproduce results
+# goals.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
+#                 data= goals,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(goals.brms.intercept,file="goals.brms.intercept.rds")
+goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
+# shinystan::launch_shinystan(goals.brms.intercept)
+summary(goals.brms.intercept)
+hypothesis(goals.brms.intercept, "Intercept > 0", alpha=.05)
+pp_check(goals.brms.intercept, nsamples=100)
+goals.brms.intercept.diag <- loo(goals.brms.intercept)
+plot(goals.brms.intercept.diag)
+
+goals_hypothesis_vector <- c("ageday < 0",
+                       "training_yesno1 > 0",
+                       "location_object_goal_ambiguous1 > 0",
+                       "action_consequence1 > 0",
+                       "agent1 > 0",
+                       "agent2 > 0", 
+                       "bothobjects_present_visible_fam1 > 0"
+            )
+
+# goals.brms.full <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
+#                 data= goals,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(goals.brms.full,file="goals.brms.full.rds")
+goals.brms.full <- readRDS("goals.brms.full.rds")
+# shinystan::launch_shinystan(goals.brms.full)
+summary(goals.brms.full)
+pp_check(goals.brms.full, nsamples=100)
+plot(loo(goals.brms.full), label_points = TRUE)
+
+goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
+
+
+# goals.brms.full.simplefx  <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1|experiment) + (1|paper),
+#                 data= goals,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
+goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
+# shinystan::launch_shinystan(goals.brms.full.simplerfx)
+summary(goals.brms.full.simplerfx)
+pp_check(goals.brms.full.simplerfx, nsamples=100)
+
+goals.brms.full.simplerfx.results <- brms.test.hyp(goals.brms.full.simplerfx, goals_hypothesis_vector)
+
+(goals.compare.rfx <- bayes_factor(goals.brms.full.simplerfx, goals.brms.full))
+```
+
+
+```{r}
+knitr::kable(goals.brms.full.results[[1]])
+knitr::kable(goals.brms.full.simplerfx.results[[1]])
+```
+
+
 ### Constraints Task
 ```{r}
 hist(constraints$look_pref)
@@ -364,87 +448,29 @@ knitr::kable(constraints.brms.full.simplerfx.results[[1]])
 knitr::kable(constraints.brms.full.results[[1]])
 ```
 
-
-
-### Goals Task
+#### Trying peakier prior
 ```{r}
-#  not run, uncomment to reproduce results
-# goals.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
-#                 data= goals,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.intercept,file="goals.brms.intercept.rds")
-goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
-# shinystan::launch_shinystan(goals.brms.intercept)
-summary(goals.brms.intercept)
-hypothesis(goals.brms.intercept, "Intercept > 0", alpha=.05)
-pp_check(goals.brms.intercept, nsamples=100)
-goals.brms.intercept.diag <- loo(goals.brms.intercept)
-plot(goals.brms.intercept.diag)
+# not run, uncomment to reproduce results
+constraints.brms.intercept.smallervar <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
+                data= constraints,
+                warmup = 10,
+                iter   = 1000,
+                family = student(link="identity"),
+                chains = 3,
+                thin = 2,
+                seed = 429,
+                save_all_pars = TRUE,
+                sample_prior = TRUE,
+                control = list(adapt_delta = .98))
 
-goals_hypothesis_vector <- c("ageday < 0",
-                       "training_yesno1 > 0",
-                       "location_object_goal_ambiguous1 > 0",
-                       "action_consequence1 > 0",
-                       "agent1 > 0",
-                       "agent2 > 0", 
-                       "bothobjects_present_visible_fam1 > 0"
-            )
+saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
 
-# goals.brms.full <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
-#                 data= goals,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.full,file="goals.brms.full.rds")
-goals.brms.full <- readRDS("goals.brms.full.rds")
-# shinystan::launch_shinystan(goals.brms.full)
-summary(goals.brms.full)
-pp_check(goals.brms.full, nsamples=100)
-plot(loo(goals.brms.full), label_points = TRUE)
-
-goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
+prior_summary(constraints.brms.intercept)
 
 
-# goals.brms.full.simplefx  <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1|experiment) + (1|paper),
-#                 data= goals,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
-goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
-# shinystan::launch_shinystan(goals.brms.full.simplerfx)
-summary(goals.brms.full.simplerfx)
-pp_check(goals.brms.full.simplerfx, nsamples=100)
-
-goals.brms.full.simplerfx.results <- brms.test.hyp(goals.brms.full.simplerfx, goals_hypothesis_vector)
-
-(goals.compare.rfx <- bayes_factor(goals.brms.full.simplerfx, goals.brms.full))
+constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
+# shinystan::launch_shinystan(constraints.brms.intercept)
+summary(constraints.brms.intercept)
+pp_check(constraints.brms.intercept.smallervar, ndraws=100)
 ```
 
-
-```{r}
-knitr::kable(goals.brms.full.results[[1]])
-knitr::kable(goals.brms.full.simplerfx.results[[1]])
-```
-
-`
