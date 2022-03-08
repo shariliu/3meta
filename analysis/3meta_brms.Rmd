@@ -4,12 +4,12 @@ author: "Shari Liu"
 date: "2/22/2022"
 output: 
   html_document:
-    code_folding: hide
+    code_folding: show
 ---
 
 ```{r setup, include=FALSE}
 options(scipen = 999, digits = 4)
-knitr::opts_chunk$set(comment = "#")
+knitr::opts_chunk$set(comment = "#", echo = FALSE)
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
 
@@ -23,7 +23,7 @@ ipak <- function (pkg) {
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse", "lsmeans", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "patchwork", "wesanderson", "devtools", "effectsize", "mice", "rstan", "brms", "bayestestR", "rstanarm", "shinystan", "DT", "tidybayes")
+packages <- c("tidyverse", "lsmeans", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "patchwork", "wesanderson", "devtools", "effectsize", "mice", "rstan", "brms", "bayestestR", "rstanarm", "shinystan", "DT", "tidybayes", "distributional", "loo")
 devtools::install_github("mvuorre/brmstools")
 
 ipak(packages)
@@ -35,6 +35,8 @@ options(contrasts = c("contr.sum", "contr.poly"))
 # fix bs with dplyr 
 detach("package:dplyr", unload = TRUE)
 library("dplyr")
+
+sessionInfo()
 ```
 
 ```{r}
@@ -67,6 +69,19 @@ goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visib
 
 # Exploratory Analysis
 ## Visualization
+
+```{r}
+ind.data.expunexp <- ind.data %>%
+  gather(test_event, look_sec, exp_look:unexp_look) %>%
+  mutate(look_logsec = log(look_sec))
+
+exp.look <- ind.data.expunexp %>% filter(test_event == "exp_look") %>% select(look_sec) %>% as.vector()
+unexp.look <- ind.data.expunexp %>% filter(test_event == "unexp_look") %>% select(look_sec) %>% as.vector()
+
+hist(exp.look$look_sec)
+hist(unexp.look$look_sec)
+```
+
 ```{r}
 ind.data.long <- ind.data %>%
   gather(look_type, look_sec, unexp_look:exp_look) %>%
@@ -116,6 +131,21 @@ ind.data.long <- ind.data %>%
     labs(subtitle = "Looking in log seconds vs age, in the goals task, \nbroken down by whether the goal was ambiguous")
 )
 ```
+
+```{r}
+(eplot6 <- ggplot(ind.data.long, aes(x = look_type, y=look_log)) +
+    geom_boxplot()+
+    geom_point(aes(colour = paper, alpha=.5)) +
+    # geom_smooth(aes(colour = paper, alpha=.5), method = "glm")+
+    # geom_smooth(method = "lm")+
+    ylab("Looking time (log sec)")+
+    facet_wrap(~task+training_yesno, nrow=2)+
+    theme_cowplot(10)+
+    background_grid()+
+    labs(subtitle = "Looking in log seconds vs age, broken down by task, \ntest event, and whether there was action training")
+)
+```
+
 
 ```{r}
 hist(ind.data$look_pref)
@@ -190,7 +220,7 @@ plot(allEffects(goals.e1.aftercooks))
 ```
 
 
-## Impute Sommerville Data
+## Attempts to original Sommerville data (on hold for now)
 ```{r}
 
 # 0_pilotnotraining
@@ -226,7 +256,7 @@ In the primary analysis, we chose to pare down the random effects structure to j
 
 ```{r}
 brms.test.hyp <- function(model, hyp.vector) {
-  results <- hypothesis(model, hyp.vector, seed = 429, alpha=.05)[[1]]
+  results <- hypothesis(model, hyp.vector, seed = 429, alpha=.05)
   return(results)
 }
 
@@ -250,7 +280,7 @@ report.brms <- function(df, index, places) {
 
 
 ### Constraints Task
-```{r, eval=FALSE}
+```{r}
 hist(constraints$look_pref)
 
 ##  not run, uncomment to reproduce results
@@ -268,13 +298,11 @@ hist(constraints$look_pref)
 # saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
 
 constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
-shinystan::launch_shinystan(constraints.brms.intercept)
+# shinystan::launch_shinystan(constraints.brms.intercept)
 summary(constraints.brms.intercept)
 pp_check(constraints.brms.intercept, ndraws=100)
-pairs(constraints.brms.intercept, par = "b", 
-      off_diag_args =  # arguments of the scatterplots
-        list(size = 0.5,  # point size
-             alpha = 0.25))  # transparency
+constraints.brms.intercept.diag <- loo(constraints.brms.intercept)
+plot(constraints.brms.intercept.diag)
 
 hypothesis(constraints.brms.intercept, "Intercept > 0", alpha=.05)
 
@@ -286,44 +314,23 @@ constraints_hypothesis_vector <- c("ageday > 0",
                        "actor_hand2 > 0", 
                        "agent_efficient_fam1 > 0"
             )
-# constraints.brms.full <- update(constraints.brms.intercept,
-#                                 newdata = constraints,
-#                                 formula. = ~ . +  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam)
+# constraints.brms.full <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1|paper),
+#                 data= constraints,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.full,file="constraints.brms.full.rds")
 constraints.brms.full <- readRDS("constraints.brms.full.rds")
 pp_check(constraints.brms.full, ndraws=100)
-shinystan::launch_shinystan(constraints.brms.full)
+# shinystan::launch_shinystan(constraints.brms.full)
 summary(constraints.brms.full)
 
-loo_fit <- loo(constraints.brms.full)
-plot(loo_fit, label_points = TRUE)
-
-pairs(constraints.brms.full, par = "b", 
-      off_diag_args =  # arguments of the scatterplots
-        list(size = 0.5,  # point size
-             alpha = 0.25))  # transparency
-
-get_variables(constraints.brms.full)
-
-constraints.brms.full %>%
-  spread_draws(condition_mean[condition]) %>%
-  head(10)
-ranef(constraints.brms.full, groups="experiment", probs = 0.5)
-
-constraints.brms.full %>%
- # recover_types(constraints) %>% 
-  spread_draws(b[training_yesno1, condition:1]) %>%
-  head(10)
-
-constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
-
-
-# constraints.brms.full.scaled <- update(constraints.brms.intercept,
-#                                 newdata = constraints,
-#                                 formula. = + scale(look_pref) - look_pref ~ . + training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam)
-saveRDS(constraints.brms.full.scaled,file="constraints.brms.full.scaled.rds")
-shinystan::launch_shinystan(constraints.brms.full.scaled)
-pp_check(constraints.brms.full.scaled, ndraws=100)
 
 # constraints.brms.full.simplerfx <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
 #                 data= constraints,
@@ -338,32 +345,26 @@ pp_check(constraints.brms.full.scaled, ndraws=100)
 #                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
 constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
-shinystan::launch_shinystan(constraints.brms.full.simplerfx)
+# shinystan::launch_shinystan(constraints.brms.full.simplerfx)
 pp_check(constraints.brms.full.simplerfx, ndraws=100)
-plot(loo(constraints.brms.full), label_points = TRUE)
 summary(constraints.brms.full.simplerfx)
 
 constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
 
-constraints.brms.intercept <- add_criterion(constraints.brms.intercept, "waic")
-constraints.brms.full.simplefx <- add_criterion(constraints.brms.full.simplerfx, "waic")
-constraints.brms.full <- add_criterion(constraints.brms.full, "waic")
+constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
 
-(constraints.compare.rfx <- bayes_factor(constraints.brms.full.simplefx, constraints.brms.full))
-(constraints.compare.rfx.loo <- loo_compare(constraints.brms.full.simplerfx, goals.brms.full, criterion = "waic"))
-(constraints.compare.rfx.loo2 <- LOO(constraints.brms.full.simplefx, constraints.brms.full))
-(constraints.compare.rfx.loo3 <- LOO(constraints.brms.intercept, constraints.brms.full))
+(constraints.compare.rfx <- bayes_factor(constraints.brms.full.simplerfx, constraints.brms.full))
 
-
-waic(constraints.brms.full.simplerfx, constraints.brms.full)
 
 
 ```
 
-```{r, eval=FALSE}
-knitr::kable(constraints.brms.full.results)
-knitr::kable(constraints.brms.full.simplerfx.results)
+```{r}
+knitr::kable(constraints.brms.full.simplerfx.results[[1]])
+knitr::kable(constraints.brms.full.results[[1]])
 ```
+
+
 
 ### Goals Task
 ```{r}
@@ -385,6 +386,8 @@ goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
 summary(goals.brms.intercept)
 hypothesis(goals.brms.intercept, "Intercept > 0", alpha=.05)
 pp_check(goals.brms.intercept, nsamples=100)
+goals.brms.intercept.diag <- loo(goals.brms.intercept)
+plot(goals.brms.intercept.diag)
 
 goals_hypothesis_vector <- c("ageday < 0",
                        "training_yesno1 > 0",
@@ -395,9 +398,17 @@ goals_hypothesis_vector <- c("ageday < 0",
                        "bothobjects_present_visible_fam1 > 0"
             )
 
-# goals.brms.full <- update(goals.brms.intercept,
-#                                 newdata = goals,
-#                                 formula. = ~ . +  training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous)
+# goals.brms.full <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
+#                 data= goals,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = gaussian(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
 # saveRDS(goals.brms.full,file="goals.brms.full.rds")
 goals.brms.full <- readRDS("goals.brms.full.rds")
 # shinystan::launch_shinystan(goals.brms.full)
@@ -420,115 +431,20 @@ goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vecto
 #                 sample_prior = TRUE,
 #                 control = list(adapt_delta = .98))
 # saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
-goals.brms.full.simplefx <- readRDS("goals.brms.full.simplefx.rds")
-shinystan::launch_shinystan(goals.brms.full.simplefx)
-summary(goals.brms.full.simplefx)
-pp_check(goals.brms.full.simplefx, nsamples=100)
-plot(loo(goals.brms.full.simplefx), label_points = TRUE)
+goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
+# shinystan::launch_shinystan(goals.brms.full.simplerfx)
+summary(goals.brms.full.simplerfx)
+pp_check(goals.brms.full.simplerfx, nsamples=100)
 
-goals.brms.full.simplefx.results <- brms.test.hyp(goals.brms.full.simplefx, goals_hypothesis_vector)
+goals.brms.full.simplerfx.results <- brms.test.hyp(goals.brms.full.simplerfx, goals_hypothesis_vector)
 
-goals.brms.full.simplefx <- add_criterion(goals.brms.full.simplefx, "waic")
-goals.brms.full <- add_criterion(goals.brms.full, "waic")
-
-(goals.compare.rfx <- bayes_factor(goals.brms.full.simplefx, goals.brms.full))
-(goals.compare.rfx.loo <- loo_compare(goals.brms.full.simplefx, goals.brms.full, criterion = "waic"))
-(goals.compare.rfx.loo2 <- LOO(goals.brms.full.simplefx, goals.brms.full))
+(goals.compare.rfx <- bayes_factor(goals.brms.full.simplerfx, goals.brms.full))
 ```
 
 
 ```{r}
-knitr::kable(goals.brms.full.results)
-knitr::kable(goals.brms.full.simplefx.results)
+knitr::kable(goals.brms.full.results[[1]])
+knitr::kable(goals.brms.full.simplerfx.results[[1]])
 ```
 
-# Effect of important predictors on expected vs unexpected looking
-
-```{r}
-
-ind.data.expunexp <- ind.data %>%
-  gather(test_event, look_sec, exp_look:unexp_look) %>%
-  mutate(look_logsec = log(look_sec))
-
-exp.look <- ind.data.expunexp %>% filter(test_event == "exp_look") %>% select(look_sec) %>% as.vector()
-unexp.look <- ind.data.expunexp %>% filter(test_event == "unexp_look") %>% select(look_sec) %>% as.vector()
-
-hist(exp.look$look_sec)
-hist(unexp.look$look_sec)
-
-expunexp.constraints <- ind.data.expunexp %>%
-  filter(task == "constraints")
-```
-
-```{r}
-#  not run, uncomment to reproduce results
-# constraints.brms.training <- brm(formula = look_logsec ~ training_yesno * test_event + (1|condition) + (1|experiment) + (1|paper),
-#                 data= expunexp.constraints,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(constraints.brms.training,file="constraints.brms.training.rds")
-
-constraints.brms.training <- readRDS("constraints.brms.training.rds")
-# shinystan::launch_shinystan(constraints.brms.training)
-summary(constraints.brms.training)
-
-hypothesis(constraints.brms.training, "training_yesno1:test_event1 > 0", alpha=.05)
-
-
-```
-
-```{r}
-#  not run, uncomment to reproduce results
-# constraints.brms.causal <- brm(formula = look_logsec ~ action_causal * test_event + (1|condition) + (1|experiment) + (1|paper),
-#                 data= expunexp.constraints,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(constraints.brms.causal,file="constraints.brms.causal.rds")
-
-
-constraints.brms.causal <- readRDS("constraints.brms.causal.rds")
-shinystan::launch_shinystan(constraints.brms.causal)
-summary(constraints.brms.causal)
-
-hypothesis(constraints.brms.causal, "action_causal1:test_event1 > 0", alpha=.05)
-conditional_effects(constraints.brms.causal)
-```
-
-```{r}
-#  not run, uncomment to reproduce results
-# constraints.brms.efficient <- brm(formula = look_logsec ~ agent_efficient_fam * test_event + (1|condition) + (1|experiment) + (1|paper),
-#                 data= expunexp.constraints,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(constraints.brms.efficient,file="constraints.brms.efficient.rds")
-
-
-constraints.brms.efficient <- readRDS("constraints.brms.efficient.rds")
-# shinystan::launch_shinystan(constraints.brms.efficient)
-summary(constraints.brms.efficient)
-
-hypothesis(constraints.brms.efficient, "agent_efficient_fam1:test_event1 > 0", alpha=.05)
-conditional_effects(constraints.brms.efficient)
-```
-
+`
