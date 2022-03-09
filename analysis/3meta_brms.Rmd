@@ -279,91 +279,6 @@ report.brms <- function(df, index, places) {
 ```
 
 
-### Constraints Task
-```{r}
-hist(constraints$look_pref)
-
-##  not run, uncomment to reproduce results
-# constraints.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
-#                 data= constraints, 
-#                 warmup = 1000, 
-#                 iter   = 5000, 
-#                 family = gaussian(link="identity"),
-#                 chains = 6, 
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
-
-constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
-# shinystan::launch_shinystan(constraints.brms.intercept)
-summary(constraints.brms.intercept)
-pp_check(constraints.brms.intercept, ndraws=100)
-constraints.brms.intercept.diag <- loo(constraints.brms.intercept)
-plot(constraints.brms.intercept.diag)
-
-hypothesis(constraints.brms.intercept, "Intercept > 0", alpha=.05)
-
-constraints_hypothesis_vector <- c("ageday > 0",
-                       "training_yesno1 > 0",
-                       "action_causal1 > 0",
-                       "action_consequence1 > 0",
-                       "actor_hand1 > 0",
-                       "actor_hand2 > 0", 
-                       "agent_efficient_fam1 > 0"
-            )
-# constraints.brms.full <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1|paper),
-#                 data= constraints,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(constraints.brms.full,file="constraints.brms.full.rds")
-constraints.brms.full <- readRDS("constraints.brms.full.rds")
-pp_check(constraints.brms.full, ndraws=100)
-# shinystan::launch_shinystan(constraints.brms.full)
-summary(constraints.brms.full)
-
-
-# constraints.brms.full.simplerfx <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
-#                 data= constraints,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
-constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
-# shinystan::launch_shinystan(constraints.brms.full.simplerfx)
-pp_check(constraints.brms.full.simplerfx, ndraws=100)
-summary(constraints.brms.full.simplerfx)
-
-constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
-
-constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
-
-(constraints.compare.rfx <- bayes_factor(constraints.brms.full.simplerfx, constraints.brms.full))
-
-
-
-```
-
-```{r}
-knitr::kable(constraints.brms.full.simplerfx.results[[1]])
-knitr::kable(constraints.brms.full.results[[1]])
-```
-
 
 
 ### Goals Task
@@ -373,7 +288,7 @@ knitr::kable(constraints.brms.full.results[[1]])
 #                 data= goals,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
@@ -402,7 +317,7 @@ goals_hypothesis_vector <- c("ageday < 0",
 #                 data= goals,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
@@ -414,7 +329,9 @@ goals.brms.full <- readRDS("goals.brms.full.rds")
 # shinystan::launch_shinystan(goals.brms.full)
 summary(goals.brms.full)
 pp_check(goals.brms.full, nsamples=100)
-plot(loo(goals.brms.full), label_points = TRUE)
+goals.brms.full.diag <- loo(goals.brms.full)
+plot(goals.brms.full.diag)
+
 
 goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
 
@@ -423,7 +340,7 @@ goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vecto
 #                 data= goals,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
@@ -435,6 +352,8 @@ goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
 # shinystan::launch_shinystan(goals.brms.full.simplerfx)
 summary(goals.brms.full.simplerfx)
 pp_check(goals.brms.full.simplerfx, nsamples=100)
+goals.brms.full.simplerfx.diag <- loo(goals.brms.full.simplerfx)
+plot(goals.brms.full.simplerfx.diag)
 
 goals.brms.full.simplerfx.results <- brms.test.hyp(goals.brms.full.simplerfx, goals_hypothesis_vector)
 
@@ -447,4 +366,97 @@ knitr::kable(goals.brms.full.results[[1]])
 knitr::kable(goals.brms.full.simplerfx.results[[1]])
 ```
 
-`
+The intercept only model (`look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper)`) provided strong evidence for looking preference larger than 0 (evidence ratio = 14.01). The full model with complex random effects (look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper))  yielded some similar results to the frequentist model, but also some differences: of all the predictors, seeing unambiguous evidence for what someone’s goal was had high predictive power (evidence ratio = 4.87), as did seeing both objects present during familiarization (evidence ratio = 10.46), and seeing a self-propelled object as the agent (6.29). We also found evidence for a negative age effect, with younger babies showing stronger looking preferences than older babies (11.16). Again, these BFs were substantially smaller than the full Bayesian model with simpler random effects, and all confidence intervals included 0, suggesting that substantial variance in the data is accounted for by shared methodological considerations within experiments and papers. As in the constraints task, the Bayes Factor between the full models with identical fixed effects and varying (simple vs complex) random effects strongly favored the simple random effects structure (BF = 34.44220). These results suggest that, like in the constraints task, although adding random slopes for conditions and experiments accounted for variance in infants’ looking behavior, the simple random effects structure represented in the frequentist analysis better accounted for this data. In the Bayesian version of this model, the only effects with posterior probabilities greater than 0.95 were seeing unambiguous evidence for someone’s goal, seeing a self-propelled object as an agent, and seeing both objects during familiarization or habituation, which largely agree with the findings from the frequentist analysis. (We note, however, that some of the predictors identified by this analysis appeared to be driven by just a few influential subjects, according to the frequentist analysis, but no observations reached the threshold of k>0.7 in the PSIS diagnostic plots.)
+
+
+### Constraints Task
+```{r}
+hist(constraints$look_pref)
+
+# #  not run, uncomment to reproduce results
+# constraints.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
+#                 data= constraints,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = student(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
+
+constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
+# shinystan::launch_shinystan(constraints.brms.intercept)
+summary(constraints.brms.intercept)
+pp_check(constraints.brms.intercept, ndraws=100)
+constraints.brms.intercept.diag <- loo(constraints.brms.intercept)
+plot(constraints.brms.intercept.diag)
+
+hypothesis(constraints.brms.intercept, "Intercept > 0", alpha=.05)
+
+constraints_hypothesis_vector <- c("ageday > 0",
+                       "training_yesno1 > 0",
+                       "action_causal1 > 0",
+                       "action_consequence1 > 0",
+                       "actor_hand1 > 0",
+                       "actor_hand2 > 0", 
+                       "agent_efficient_fam1 > 0"
+            )
+
+# constraints.brms.full <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1|paper),
+#                 data= constraints,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = student(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(constraints.brms.full,file="constraints.brms.full.rds")
+constraints.brms.full <- readRDS("constraints.brms.full.rds")
+pp_check(constraints.brms.full, ndraws=100)
+# shinystan::launch_shinystan(constraints.brms.full)
+summary(constraints.brms.full)
+constraints.brms.full.diag <- loo(constraints.brms.full)
+plot(constraints.brms.full.diag)
+
+# constraints.brms.full.simplerfx <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
+#                 data= constraints,
+#                 warmup = 1000,
+#                 iter   = 5000,
+#                 family = student(link="identity"),
+#                 chains = 6,
+#                 thin = 2,
+#                 seed = 429,
+#                 save_all_pars = TRUE,
+#                 sample_prior = TRUE,
+#                 control = list(adapt_delta = .98))
+# saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
+constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
+# shinystan::launch_shinystan(constraints.brms.full.simplerfx)
+constraints.brms.full.simplerfx.diag <- loo(constraints.brms.full.simplerfx)
+plot(constraints.brms.full.simplerfx.diag)
+pp_check(constraints.brms.full.simplerfx, ndraws=100)
+summary(constraints.brms.full.simplerfx)
+
+
+constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
+
+constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
+
+(constraints.compare.rfx <- bayes_factor(constraints.brms.full.simplerfx, constraints.brms.full))
+
+
+
+```
+
+```{r}
+knitr::kable(constraints.brms.full.simplerfx.results[[1]])
+knitr::kable(constraints.brms.full.results[[1]])
+```
+
+The intercept only model (look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper)) provided anecdotal against the hypothesis that there is a looking preference greater than 0 (evidence ratio = 0.44).  The full model with complex random effects (look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper)) yielded qualitatively similar results to the frequentist model (see Table x): of all the predictors, seeing an action that caused an observable outcome (evidence ratio = 3.74) had the highest predictive power on infants’ looking behavior, followed by age in days (3.05) and sticky mittens training (2.79). However, the lower confidence interval over these estimates crossed 0, and the size of the evidence ratios were substantially smaller than the Bayes Factors from the frequentist model, and smaller than the evidence ratios from the full Bayesian model with simpler random effects (see Table x), suggesting that substantial variance in the data is accounted for by shared methodological decisions within experiments and papers. (Note that the 26 conditions from this task came from just 2 papers). Nevertheless, the Bayes Factor between these two full models with identical fixed effects and varying (simple vs complex) random effects substantially favored the simple random effects structure (BF = 1998079.74). Altogether, these results suggest that although adding random slopes for conditions and experiments accounted for variance in infants’ looking behavior, simple random effects structure presented in the frequentist analysis better accounts for the data. (One caveat to this interpretation is that the number of conditions and papers were limited - only 2 papers with 7 and 5 conditions each.) In the Bayesian version of this model, the only effects with posterior probabilities greater than 0.95 were sticky mittens training, causal action, and seeing a constraint agent during habituation, which largely agree with the findings from the frequentist analysis.

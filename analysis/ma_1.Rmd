@@ -33,10 +33,12 @@ options(contrasts = c("contr.sum", "contr.poly"))
 # fix bs with dplyr 
 detach("package:dplyr", unload = TRUE)
 library("dplyr")
+
+sessionInfo()
 ```
 
 ```{r import.data, eval=FALSE}
-## uncomment and evaluate to generate data combined w study designs
+# uncomment and evaluate to generate data combined w study designs
 
 # ind.data.pre <- read.csv("./ma_study_data.csv", header=TRUE) %>%
 #   mutate(experiment=str_sub(MA_condition,1,1)) %>%
@@ -60,26 +62,24 @@ library("dplyr")
 #   filter(paper != "sommerville2005",
 #          task != "causes")
 # 
-# ma.data %>% 
+# ma.data %>%
 #   select(paper, long_cite) %>%
 #   unique() %>%
 #   knitr::kable()
 # # merge study design with individual looks from babies
 # 
-# ind.data <- left_join(ind.data.pre, study.design, 
+# ind.data <- left_join(ind.data.pre, study.design,
 #                       by=c("paper", "experiment", "condition")) %>%
 #   mutate(sex = tolower(str_sub(sex,1,1)),
 #          look_pref = unexp_look - exp_look) %>%
 #   mutate(paper = str_replace_all(paper, "unpublished", "unpub")) %>%
 #   mutate(task = str_replace_all(task, "efficiency", "constraints")) %>%
-#   mutate_if(is.character,as.factor) 
+#   mutate_if(is.character,as.factor)
 # 
 # str(ind.data)
 # write.csv(ind.data, "fulldata.csv")
 # View(ind.data)
 
-ind.data <- read.csv("./fulldata.csv", header=TRUE)
-str(ind.data)
 ```
 
 ```{r helper.functions}
@@ -297,6 +297,11 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 ```
 
 ```{r summary}
+
+
+ind.data <- read.csv("./fulldata.csv", header=TRUE)
+str(ind.data)
+
 ind.data.long <- ind.data %>%
          rename(expected = exp_look,
                 unexpected = unexp_look) %>%
@@ -373,7 +378,7 @@ Looking to the expected vs unexpected event for all individual conditions.
 
 plot1 <- ggplot(ind.data.long,
        aes(trial_type, looking_time, colour=paper))+
-  theme_cowplot(12)+
+  theme_cowplot(5)+
   theme(legend.title = element_blank())+
   geom_boxplot(outlier.alpha = 0.2)+
   geom_point(alpha=0.2)+
@@ -383,7 +388,7 @@ plot1 <- ggplot(ind.data.long,
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   ylab("Looking Time (s)")+
   xlab("Condition")+
-  facet_wrap(~task+paper+condition, nrow=6, labeller=label_wrap_gen())+
+  facet_wrap(~task+paper+condition, nrow=2, labeller=label_wrap_gen())+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2),
         legend.position="bottom")
 
@@ -453,10 +458,10 @@ constraints <- ind.data %>% filter(task =="constraints")
 
 # checking ref levels for all factors
 constraints$actor_hand <- factor(constraints$actor_hand, levels=c("bare", "gloved", "mittened")) # for summed contr last level is dropped
-constraints$action_consequence <- relevel(constraints$action_consequence, ref = "state_change")
-constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "yes")
-constraints$training_yesno <- relevel(constraints$training_yesno, ref = "yes")
-constraints$action_causal <- relevel(constraints$action_causal, ref = "yes")
+constraints$action_consequence <- relevel(as.factor(constraints$action_consequence), ref = "state_change")
+constraints$agent_efficient_fam <- relevel(as.factor(constraints$agent_efficient_fam), ref = "yes")
+constraints$training_yesno <- relevel(as.factor(constraints$training_yesno), ref = "yes")
+constraints$action_causal <- relevel(as.factor(constraints$action_causal), ref = "yes")
 
 ```
 
@@ -615,7 +620,7 @@ constraints.interventions.cooks <- cbind(
 ) 
 
 sjPlot:: tab_model(constraints.m1.cooks.beta, show.stat=TRUE)
-
+summary(constraints.m1.cooks.beta)
 ```
 
 ### Generating BFs
@@ -669,6 +674,7 @@ constraints.bf.full
 # combine BF tables
 constraints.bf <- full_join(constraints.bf.full, constraints.bf.cooks) %>%
   arrange(desc(BF))
+
 ```
 
 
@@ -687,10 +693,10 @@ knitr::kable(constraints.bf)
 ```{r}
 goals <- ind.data %>% filter(task =="goals")
 
-goals$action_consequence <- relevel(goals$action_consequence, ref = "none")
+goals$action_consequence <- relevel(as.factor(goals$action_consequence), ref = "none")
 goals$agent <- factor(goals$agent, levels=c("object", "person", "hand")) # last level gets dropped in model estimates
-goals$training_yesno <- relevel(goals$training_yesno, ref = "yes")
-goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visible_fam, ref = "yes")
+goals$training_yesno <- relevel(as.factor(goals$training_yesno), ref = "yes")
+goals$bothobjects_present_visible_fam <- relevel(as.factor(goals$bothobjects_present_visible_fam), ref = "yes")
 
 ```
 
@@ -705,7 +711,7 @@ goals.baseline.data <- goals %>%
 goals.b1 <- lmer(data = goals.baseline.data,
                        formula = look_pref ~ 1 + ageday + (1|condition))
 
-goals.b1.table <- sjPlot:: tab_model(goals.b1,
+goals.b1.table <- sjPlot::tab_model(goals.b1,
                                            show.std	=TRUE,
                                            show.stat=TRUE,
                                            show.df=TRUE)
@@ -762,7 +768,7 @@ sjPlot::plot_model(goals.m1,
                    show.values=TRUE,
                    show.p=TRUE)
 
-sjPlot:: tab_model(goals.m1, show.stat=TRUE)
+sjPlot::tab_model(goals.m1, show.stat=TRUE)
 plot(allEffects(goals.m1))
 
 goals.interventions<- cbind(
@@ -832,7 +838,9 @@ regressionplot2 <- sjPlot::plot_model(goals.m1.cooks.beta,
 
 summary(goals.m1.cooks)
 plot(allEffects(goals.m1.cooks))
-sjPlot:: tab_model(goals.m1.cooks.beta, show.stat=TRUE)
+
+summary(goals.m1.cooks.beta)
+
 
 goals.interventions.cooks<- cbind(
   gen.beta(effectsize::standardize(goals.m1.cooks)),
@@ -841,6 +849,12 @@ goals.interventions.cooks<- cbind(
 ) 
 
 ```
+
+Warning - for some reason sjPlot does not populate the below table with the correct values. Please refer to the summary of `goals.m1.cooks.beta` above...
+```{r}
+sjPlot::tab_model(goals.m1.cooks.beta, show.stat=TRUE)
+```
+
 
 ```{r}
 (regressionplot1 | regressionplot2) + plot_annotation(tag_levels = 'A')
@@ -907,7 +921,7 @@ We again computed Bayes Factors for each of the fixed effects, which expresses t
 
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
 
-When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (marginal effect, `r report(goals.interventions,4,3,2)`), or presenting a self-propelled object (marginal effect, `r report(goals.interventions,5,3,2)`) or an entire person (`r report(goals.interventions,6,3,2)`), relative to seeing a hand appear from off-stage, increased infants' looking preference for the unexpected event. We did not find any other effects, including age, motor training, or action consequences, when taking into account all of these predictors in the same model. We did not find an effect of age, `r report(goals.interventions,8,3,2)`. These analyses included `r nrow(goals)` total infants, `r nrow(goals)-nrow(goals.cooks)` of whom were classified as influential based on Cook's Distance. Excluding these influential participants in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into significance (`r report(goals.interventions.cooks,4,3,2)`), and the two effects of the agent type crossed the threshold out of significance (marginal effect of object, `r report(goals.interventions.cooks,5,3,2)`; non-significant effect of entire person, `r report(goals.interventions.cooks,6,3,2)`).
+When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (marginal effect, `r report(goals.interventions,4,3,2)`) increased infants' looking preference for the unexpected event. We did not find any other effects, including age, motor training, or other manipulations, when taking into account all of these predictors in the same model. These analyses included `r nrow(goals)` total infants, `r nrow(goals)-nrow(goals.cooks)` of whom were classified as influential based on Cook's Distance. Excluding these influential participants in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into significance (`r report(goals.interventions.cooks,4,3,2)`).
 
 
 
