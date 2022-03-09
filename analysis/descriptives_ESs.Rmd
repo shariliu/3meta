@@ -82,35 +82,10 @@ skerry2013_descriptives <- skerry2013 %>%
 
 knitr::kable(skerry2013_descriptives)
 ```
-### Gerson, S. A., & Woodward, A. L. (2014b). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
-```{r gerson2014a}
-gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv", header=TRUE) %>%
-  mutate(experiment = case_when(Condition=="Act" ~"Exp.1",
-                                Condition=="Obs" ~"Exp.1",
-                                Condition=="gen" ~ "Exp.2"),
-         MA_condition = case_when(Condition=="Act" ~"1_Active",
-                                Condition=="Obs" ~"1_Observational",
-                                Condition=="gen" ~ "2_Generalization"),
-         unexp_look = NewGoal_Avg,
-         exp_look = OldGoal_Avg
-         )
-
-gerson2014b_descriptives <- gerson2014b %>%
-  group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(Sex=="f") / n_babies)
-
-knitr::kable(gerson2014a_descriptives)
-```
 ### Gerson, S. A., & Woodward, A. L. (2014a). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
-```{r gerson2014b}
+```{r gerson2014a}
 gerson2014a <- read.csv(file="formatted_data/csv_and_codebook/gerson2014a_ibd.csv", header=TRUE) %>%
     mutate(experiment = case_when(Condition=="Active" ~"Exp.1",
                                 Condition=="Observation" ~"Exp.1",
@@ -134,6 +109,33 @@ gerson2014a_descriptives <- gerson2014a %>%
 
 knitr::kable(gerson2014a_descriptives)
 ```
+### Gerson, S. A., & Woodward, A. L. (2014b). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
+
+```{r gerson2014b}
+gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv", header=TRUE) %>%
+  mutate(experiment = case_when(Condition=="Act" ~"Exp.1",
+                                Condition=="Obs" ~"Exp.1",
+                                Condition=="gen" ~ "Exp.2"),
+         MA_condition = case_when(Condition=="Act" ~"1_Active",
+                                Condition=="Obs" ~"1_Observational",
+                                Condition=="gen" ~ "2_Generalization"),
+         unexp_look = NewGoal_Avg,
+         exp_look = OldGoal_Avg
+         )
+
+gerson2014b_descriptives <- gerson2014b %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
+                   prop_girls = sum(Sex=="f") / n_babies)
+
+knitr::kable(gerson2014a_descriptives)
+```
+
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
 ```{r choi2018}
