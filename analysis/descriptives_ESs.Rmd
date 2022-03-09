@@ -30,7 +30,7 @@ options(digits=2)
 ### Luo, Y. (2011). Three-month-old infants attribute goals to a non-human agent. Developmental Science, 14(2), 453–460.
 
 ```{r luo2011}
-luo2011 <- read.csv(file = "formatted_data/csv/luo2011.csv", header=TRUE) %>%
+luo2011 <- read.csv(file = "formatted_data/csv_and_codebook/luo2011.csv", header=TRUE) %>%
   mutate(experiment = case_when(condition=="one-object" ~ "Exp.1",
                                 condition=="two-object" ~ "Exp.1",
                                 condition=="different-positions" ~ "Exp.2"),
@@ -56,7 +56,7 @@ knitr::kable(luo2011_descriptives)
 ### Skerry, A. E., Carey, S. E., & Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.
 
 ```{r skerry2013}
-skerry2013 <- read.csv(file="formatted_data/csv/skerry2013_liu2019.csv") %>%
+skerry2013 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.csv") %>%
   filter(paper=="SCS")%>%
   mutate(MA_condition=case_when(experiment== "SCS.Exp.1" & training == "effective.training" ~ "1_effectiveactiontraining",
                                 experiment== "SCS.Exp.2" & training == "ineffective.training" ~ "2_ineffectiveactiontraining",
@@ -82,42 +82,16 @@ skerry2013_descriptives <- skerry2013 %>%
 
 knitr::kable(skerry2013_descriptives)
 ```
-### Gerson, S. A., & Woodward, A. L. (2014a). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
+### Gerson, S. A., & Woodward, A. L. (2014b). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
 ```{r gerson2014a}
-gerson2014a <- read.csv(file="formatted_data/csv/gerson2014a_cd.csv", header=TRUE) %>%
+gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv", header=TRUE) %>%
   mutate(experiment = case_when(Condition=="Act" ~"Exp.1",
                                 Condition=="Obs" ~"Exp.1",
                                 Condition=="gen" ~ "Exp.2"),
          MA_condition = case_when(Condition=="Act" ~"1_Active",
                                 Condition=="Obs" ~"1_Observational",
                                 Condition=="gen" ~ "2_Generalization"),
-         unexp_look = NewGoal_Avg,
-         exp_look = OldGoal_Avg
-         )
-
-gerson2014a_descriptives <- gerson2014a %>%
-  group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(Sex=="f") / n_babies)
-
-knitr::kable(gerson2014a_descriptives)
-```
-### Gerson, S. A., & Woodward, A. L. (2014b). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
-
-```{r gerson2014b}
-gerson2014b <- read.csv(file="formatted_data/csv/gerson2014b_ibd.csv", header=TRUE) %>%
-    mutate(experiment = case_when(Condition=="Active" ~"Exp.1",
-                                Condition=="Observation" ~"Exp.1",
-                                Condition=="Control" ~ "Exp.1"),
-         MA_condition = case_when(Condition=="Active" ~"1_Active",
-                                Condition=="Observation" ~"1_Observation",
-                                Condition=="Control" ~ "1_Control"),
          unexp_look = NewGoal_Avg,
          exp_look = OldGoal_Avg
          )
@@ -130,21 +104,46 @@ gerson2014b_descriptives <- gerson2014b %>%
                    sd_2 = sd(exp_look, na.rm=TRUE),
                    r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
                    n_babies = n(),
+                   prop_girls = sum(Sex=="f") / n_babies)
+
+knitr::kable(gerson2014a_descriptives)
+```
+### Gerson, S. A., & Woodward, A. L. (2014a). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
+
+```{r gerson2014b}
+gerson2014a <- read.csv(file="formatted_data/csv_and_codebook/gerson2014a_ibd.csv", header=TRUE) %>%
+    mutate(experiment = case_when(Condition=="Active" ~"Exp.1",
+                                Condition=="Observation" ~"Exp.1",
+                                Condition=="Control" ~ "Exp.1"),
+         MA_condition = case_when(Condition=="Active" ~"1_Active",
+                                Condition=="Observation" ~"1_Observation",
+                                Condition=="Control" ~ "1_Control"),
+         unexp_look = NewGoal_Avg,
+         exp_look = OldGoal_Avg
+         )
+
+gerson2014a_descriptives <- gerson2014a %>%
+  group_by(MA_condition) %>%
+  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
+                   x_2 = mean(exp_look, na.rm=TRUE),
+                   sd_1 = sd(unexp_look, na.rm=TRUE),
+                   sd_2 = sd(exp_look, na.rm=TRUE),
+                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
+                   n_babies = n(),
                    prop_girls = sum(Sex=="Female") / n_babies)
 
-knitr::kable(gerson2014b_descriptives)
+knitr::kable(gerson2014a_descriptives)
 ```
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
 ```{r choi2018}
-choi2018 <- read.csv(file="formatted_data/csv/choi2018.csv", header=TRUE) %>%
+choi2018 <- read.csv(file="formatted_data/csv_and_codebook/choi2018.csv", header=TRUE) %>%
     mutate(experiment = case_when(condition=="Two-object" ~"Exp.1",
                                 condition=="One-object" ~"Exp.1",
                                 condition=="Hidden" ~ "Exp.1"),
          MA_condition = case_when(condition=="Two-object" ~"1_twoobject",
                                 condition=="One-object" ~"1_oneobject",
                                 condition=="Hidden" ~ "1_hidden")) %>%
-  #TODO figure out what the DV was in this study, avg or individual looks?
   mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
          Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
   mutate(unexp_look = New.goal_Avg,

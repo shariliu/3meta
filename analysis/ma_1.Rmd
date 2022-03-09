@@ -36,7 +36,7 @@ library("dplyr")
 ```
 
 ```{r import.data, eval=FALSE}
-## uncomment and evaluate to generate data combined w study designs
+# uncomment and evaluate to generate data combined w study designs
 
 # ind.data.pre <- read.csv("./ma_study_data.csv", header=TRUE) %>%
 #   mutate(experiment=str_sub(MA_condition,1,1)) %>%
@@ -60,19 +60,19 @@ library("dplyr")
 #   filter(paper != "sommerville2005",
 #          task != "causes")
 # 
-# ma.data %>% 
+# ma.data %>%
 #   select(paper, long_cite) %>%
 #   unique() %>%
 #   knitr::kable()
 # # merge study design with individual looks from babies
 # 
-# ind.data <- left_join(ind.data.pre, study.design, 
+# ind.data <- left_join(ind.data.pre, study.design,
 #                       by=c("paper", "experiment", "condition")) %>%
 #   mutate(sex = tolower(str_sub(sex,1,1)),
 #          look_pref = unexp_look - exp_look) %>%
 #   mutate(paper = str_replace_all(paper, "unpublished", "unpub")) %>%
 #   mutate(task = str_replace_all(task, "efficiency", "constraints")) %>%
-#   mutate_if(is.character,as.factor) 
+#   mutate_if(is.character,as.factor)
 # 
 # str(ind.data)
 # write.csv(ind.data, "fulldata.csv")

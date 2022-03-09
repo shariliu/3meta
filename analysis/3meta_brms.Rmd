@@ -288,7 +288,7 @@ report.brms <- function(df, index, places) {
 #                 data= goals,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
@@ -313,23 +313,25 @@ goals_hypothesis_vector <- c("ageday < 0",
                        "bothobjects_present_visible_fam1 > 0"
             )
 
-# goals.brms.full <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
-#                 data= goals,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = gaussian(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.full,file="goals.brms.full.rds")
+goals.brms.full <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
+                data= goals,
+                warmup = 1000,
+                iter   = 5000,
+                family = student(link="identity"),
+                chains = 6,
+                thin = 2,
+                seed = 429,
+                save_all_pars = TRUE,
+                sample_prior = TRUE,
+                control = list(adapt_delta = .98))
+saveRDS(goals.brms.full,file="goals.brms.full.rds")
 goals.brms.full <- readRDS("goals.brms.full.rds")
 # shinystan::launch_shinystan(goals.brms.full)
 summary(goals.brms.full)
 pp_check(goals.brms.full, nsamples=100)
-plot(loo(goals.brms.full), label_points = TRUE)
+goals.brms.full.diag <- loo(goals.brms.full)
+plot(goals.brms.full.diag)
+
 
 goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
 
@@ -338,7 +340,7 @@ goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vecto
 #                 data= goals,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
@@ -372,7 +374,7 @@ hist(constraints$look_pref)
 #                 data= constraints, 
 #                 warmup = 1000, 
 #                 iter   = 5000, 
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6, 
 #                 thin = 2,
 #                 seed = 429,
@@ -402,7 +404,7 @@ constraints_hypothesis_vector <- c("ageday > 0",
 #                 data= constraints,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
@@ -420,7 +422,7 @@ summary(constraints.brms.full)
 #                 data= constraints,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = gaussian(link="identity"),
+#                 family = student(link="identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
