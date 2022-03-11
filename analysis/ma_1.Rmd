@@ -360,12 +360,14 @@ str(ind.data)
 # data appear to be normally distributed
 dist1 <- ggplot(ind.data, aes(x=look_pref)) +
   geom_histogram()+
-  theme_cowplot(12)
+  theme_cowplot(12)+
+  xlab("")
 
-dist2 <- ggplot(ind.data, aes(x=look_pref)) +
+dist2 <- ggplot(ind.data, aes(x=look_pref, fill=paper)) +
   geom_histogram()+
-  facet_wrap(~paper,nrow=3)+
-  theme_cowplot(12)
+  facet_wrap(~task+paper,nrow=3)+
+  theme_cowplot(12)+
+  xlab("Looking time Preference in seconds (unexpected - expected)")
 
 (dist1 | dist2)  + plot_layout(widths = c(1,4)) + plot_annotation(tag_levels = 'A')
 ```
@@ -377,10 +379,10 @@ Looking to the expected vs unexpected event for all individual conditions.
 ```{r plots.looks}
 
 plot1 <- ggplot(ind.data.long,
-       aes(trial_type, looking_time, colour=paper))+
-  theme_cowplot(5)+
+       aes(trial_type, looking_time, fill=paper))+
+  theme_cowplot(10)+
   theme(legend.title = element_blank())+
-  geom_boxplot(outlier.alpha = 0.2)+
+  geom_boxplot(aes(alpha=str_match(trial_type, "unexpected|expected")[,1]))+
   geom_point(alpha=0.2)+
   geom_line(aes(group=subj), alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
@@ -388,12 +390,27 @@ plot1 <- ggplot(ind.data.long,
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
   ylab("Looking Time (s)")+
   xlab("Condition")+
-  facet_wrap(~task+paper+condition, nrow=2, labeller=label_wrap_gen())+
+  facet_wrap(~task+paper+condition, nrow=5, labeller=label_wrap_gen(width=10, multi_line=TRUE))+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2),
-        legend.position="bottom")
+        legend.position="bottom")+
+  scale_alpha_discrete(range = c(0.3, 1))
 
 plot1
 ```
+
+
+```{r}
+
+expunexp <- ggplot(ind.data, aes(x = log(exp_look), y=log(unexp_look))) +
+    geom_point() +
+  geom_smooth(method = "glm")+
+  xlab("Looking to expected test events (log sec)")+
+  ylab("Looking to unexpected test events (log sec)")+
+  facet_wrap(~paper, nrow=2)+
+  theme_cowplot(10)+
+  background_grid()
+```
+
 
 Looking preference (unexpected - expected) for all individual conditions.
 ```{r plots.lookdiffs}
@@ -405,9 +422,10 @@ plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
   geom_point(alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
-  theme_cowplot(12)+
+  theme_cowplot(10)+
   facet_grid(~paper, scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("Looking preference (s) \n <- Expected ------- Unexpected ->")+
+  xlab("Condition")+
   coord_cartesian(ylim=c(-40,40))+
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")+
   scale_fill_brewer(palette = "Dark2")
@@ -419,7 +437,7 @@ plot2.constraints <- ggplot(ind.data %>% filter(task == "constraints"),
   geom_point(alpha=0.2)+
   stat_summary(geom="point", fun="mean", colour="black")+
   stat_summary(geom="errorbar", fun.data="mean_se", width=0.2, colour="black")+
-  theme_cowplot(12)+
+  theme_cowplot(10)+
   facet_grid(~paper,scales = "free_x",space = "free", labeller = label_wrap_gen())+
   ylab("")+
   xlab("")+
@@ -427,8 +445,9 @@ plot2.constraints <- ggplot(ind.data %>% filter(task == "constraints"),
   theme(axis.text.x = element_text(angle = 90, hjust=0.95, vjust =0.2), legend.position = "none")+
   scale_fill_manual(values = wes_palette("Royal2"))
 
-
-(plot2.goals | plot2.constraints) + plot_layout(widths = c(2, 1)) + plot_annotation(tag_levels = 'A')
+bottomrow <- (plot2.goals | plot2.constraints) + plot_layout(widths = c(1.4, 1)) 
+bottomrow
+expunexp / bottomrow + plot_annotation(tag_levels = 'A')
 
 ```
 
@@ -454,6 +473,11 @@ Looking preference (unexpected - expected) vs age for all individual conditions.
 # Confirmatory Analysis
 ## Constraints Task
 ```{r}
+
+# fix bs with dplyr 
+detach("package:dplyr", unload = TRUE)
+library("dplyr")
+
 constraints <- ind.data %>% filter(task =="constraints")
 
 # checking ref levels for all factors
@@ -692,9 +716,8 @@ knitr::kable(constraints.bf)
 ### Baseline Effect
 ```{r}
 goals <- ind.data %>% filter(task =="goals")
-
 goals$action_consequence <- relevel(as.factor(goals$action_consequence), ref = "none")
-goals$agent <- factor(goals$agent, levels=c("object", "person", "hand")) # last level gets dropped in model estimates
+goals$agent <- factor(goals$agent, levels=c("animate", "person", "hand")) # last level gets dropped in model estimates
 goals$training_yesno <- relevel(as.factor(goals$training_yesno), ref = "yes")
 goals$bothobjects_present_visible_fam <- relevel(as.factor(goals$bothobjects_present_visible_fam), ref = "yes")
 
@@ -710,7 +733,6 @@ goals.baseline.data <- goals %>%
   
 goals.b1 <- lmer(data = goals.baseline.data,
                        formula = look_pref ~ 1 + ageday + (1|condition))
-
 goals.b1.table <- sjPlot::tab_model(goals.b1,
                                            show.std	=TRUE,
                                            show.stat=TRUE,
@@ -732,7 +754,6 @@ excluded.subs <- c("2", "7", "6", "11")
 goals.b1.cooks <- lmer(data = goals.baseline.data %>%
                          filter(!subj %in% excluded.subs),
                        formula = look_pref ~ 1 + ageday + (1|condition))
-
 summary(goals.b1.cooks)
 
 goals.baseline.cooks <- cbind(
@@ -747,6 +768,7 @@ For standard versions of the goals task, we found differential looking between t
 
 ### Intervention Analysis
 ```{r}
+
 goals.m1 <- lmer(data = goals,
      formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
      control = lmerControl(optimizer="Nelder_Mead"))
@@ -756,7 +778,8 @@ summary(goals.m1)
 # originally pre-registered model was rank deficient, needed to drop 2 variables
 # dropped action_causal because it is redundant with action_consequence (i.e. there are no non-causal actions that are state changes)
 # dropped object_diff_size_huge also because it is almost completely redundant with agent (i.e. all studies with a full human agent also are "yes" for "object_diff_size_huge")
-
+ranef(goals.m1)
+goals$paper
 # aa <- allFit(goals.m1)
 
 summary(goals.m1)
@@ -922,6 +945,4 @@ We again computed Bayes Factors for each of the fixed effects, which expresses t
 We note that the analysis we reported deviates from our pre-registration plan. In that plan, we included 8 fixed effects, including a fixed effect for age in days, one picking out a control condition, and 6 others. However, 2 of these fixed effects were either completely or partially redundant with other predictors in the model, which caused a rank deficiency issue. Thus, we dropped these two fixed effects from the model. We report this new model below.  
 
 When we compared the effects of different variants, we found that making the goal of the agent's actions unambiguous (marginal effect, `r report(goals.interventions,4,3,2)`) increased infants' looking preference for the unexpected event. We did not find any other effects, including age, motor training, or other manipulations, when taking into account all of these predictors in the same model. These analyses included `r nrow(goals)` total infants, `r nrow(goals)-nrow(goals.cooks)` of whom were classified as influential based on Cook's Distance. Excluding these influential participants in the analysis produced similar results, except that the goal ambiguity effect crossed the threshold into significance (`r report(goals.interventions.cooks,4,3,2)`).
-
-
 

@@ -146,7 +146,6 @@ ind.data.long <- ind.data %>%
 )
 ```
 
-
 ```{r}
 hist(ind.data$look_pref)
 ```
@@ -263,15 +262,15 @@ brms.test.hyp <- function(model, hyp.vector) {
 # function that returns formatted result from a brms.test.hyp df
 report.brms <- function(df, index, places) {
   "Estimate = xx [xx, xx], Evidence Ratio = xx, Posterior Probability = xx"
-  result <- paste("Estimate=", 
+  result <- paste("Estimate = ", 
                   round(df$Estimate[index], places),
                   " [",
                   round(df$CI.Lower[index], places),
                   ", ",
                   round(df$CI.Upper[index], places),
-                  "], Evidence Ratio=",
+                  "], Evidence Ratio = ",
                   round(df$Evid.Ratio[index], places),
-                  ", Posterior Probability=",
+                  ", Posterior Probability = ",
                   round(df$Post.Prob[index], places),
                   sep = "")
   return(result)
@@ -299,10 +298,12 @@ report.brms <- function(df, index, places) {
 goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
 # shinystan::launch_shinystan(goals.brms.intercept)
 summary(goals.brms.intercept)
-hypothesis(goals.brms.intercept, "Intercept > 0", alpha=.05)
 pp_check(goals.brms.intercept, nsamples=100)
 goals.brms.intercept.diag <- loo(goals.brms.intercept)
 plot(goals.brms.intercept.diag)
+
+
+goals.brms.intercept.results <- brms.test.hyp(goals.brms.intercept, "Intercept > 0")
 
 goals_hypothesis_vector <- c("ageday < 0",
                        "training_yesno1 > 0",
@@ -362,11 +363,13 @@ goals.brms.full.simplerfx.results <- brms.test.hyp(goals.brms.full.simplerfx, go
 
 
 ```{r}
+knitr::kable(goals.brms.intercept.results[[1]])
 knitr::kable(goals.brms.full.results[[1]])
 knitr::kable(goals.brms.full.simplerfx.results[[1]])
+
 ```
 
-The intercept only model (`look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper)`) provided strong evidence for looking preference larger than 0 (evidence ratio = 14.01). The full model with complex random effects (look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper))  yielded some similar results to the frequentist model, but also some differences: of all the predictors, seeing unambiguous evidence for what someone’s goal was had high predictive power (evidence ratio = 4.87), as did seeing both objects present during familiarization (evidence ratio = 10.46), and seeing a self-propelled object as the agent (6.29). We also found evidence for a negative age effect, with younger babies showing stronger looking preferences than older babies (11.16). Again, these BFs were substantially smaller than the full Bayesian model with simpler random effects, and all confidence intervals included 0, suggesting that substantial variance in the data is accounted for by shared methodological considerations within experiments and papers. As in the constraints task, the Bayes Factor between the full models with identical fixed effects and varying (simple vs complex) random effects strongly favored the simple random effects structure (BF = 34.44220). These results suggest that, like in the constraints task, although adding random slopes for conditions and experiments accounted for variance in infants’ looking behavior, the simple random effects structure represented in the frequentist analysis better accounted for this data. In the Bayesian version of this model, the only effects with posterior probabilities greater than 0.95 were seeing unambiguous evidence for someone’s goal, seeing a self-propelled object as an agent, and seeing both objects during familiarization or habituation, which largely agree with the findings from the frequentist analysis. (We note, however, that some of the predictors identified by this analysis appeared to be driven by just a few influential subjects, according to the frequentist analysis, but no observations reached the threshold of k>0.7 in the PSIS diagnostic plots.)
+The intercept only model (`look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper)`) provided moderate evidence for looking preference larger than 0 (evidence ratio = `r report.brms(goals.brms.intercept.results[[1]],1,3)`). The full model with complex random effects (`look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper)`)  yielded some similar results to the frequentist model, but also some differences: of all the predictors, there was moderate evidence that seeing unambiguous evidence for  someone’s goal `r report.brms(goals.brms.full.results[[1]],3,3)` mattered for infants' looking preferences, as did infant age `r report.brms(goals.brms.full.results[[1]],1,3)`, with older babies showing smaller effects than younger babies. These effects were substantially smaller than the full Bayesian model with simpler random effects, and all confidence intervals included 0, suggesting that substantial variance in the data is accounted for by shared methodological considerations within experiments and papers. As in the constraints task, the Bayes Factor between the full models with identical fixed effects and varying (simple vs complex) random effects strongly favored the simple random effects structure (BF = `r goals.compare.rfx[[1]]`). These results suggest that although adding random slopes for conditions and experiments accounted for variance in infants’ looking behavior, the simple random effects structure represented in the frequentist analysis better accounted for this data. In the Bayesian version of this model, the only effect with posterior probability greater than 0.95 was seeing unambiguous evidence for someone’s goal (`r report.brms(goals.brms.full.simplerfx.results[[1]],3,3)`), which largely agrees with the findings from the frequentist analysis. 
 
 
 ### Constraints Task
@@ -394,7 +397,7 @@ pp_check(constraints.brms.intercept, ndraws=100)
 constraints.brms.intercept.diag <- loo(constraints.brms.intercept)
 plot(constraints.brms.intercept.diag)
 
-hypothesis(constraints.brms.intercept, "Intercept > 0", alpha=.05)
+hypothesis(constraints.brms.intercept, "Intercept < 0", alpha=.05)
 
 constraints_hypothesis_vector <- c("ageday > 0",
                        "training_yesno1 > 0",
@@ -444,6 +447,8 @@ pp_check(constraints.brms.full.simplerfx, ndraws=100)
 summary(constraints.brms.full.simplerfx)
 
 
+constraints.brms.intercept.results <- brms.test.hyp(constraints.brms.intercept, "Intercept > 0")
+
 constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
 
 constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
@@ -455,8 +460,9 @@ constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraint
 ```
 
 ```{r}
+knitr::kable(constraints.brms.intercept.results[[1]])
 knitr::kable(constraints.brms.full.simplerfx.results[[1]])
 knitr::kable(constraints.brms.full.results[[1]])
 ```
 
-The intercept only model (look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper)) provided anecdotal against the hypothesis that there is a looking preference greater than 0 (evidence ratio = 0.44).  The full model with complex random effects (look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper)) yielded qualitatively similar results to the frequentist model (see Table x): of all the predictors, seeing an action that caused an observable outcome (evidence ratio = 3.74) had the highest predictive power on infants’ looking behavior, followed by age in days (3.05) and sticky mittens training (2.79). However, the lower confidence interval over these estimates crossed 0, and the size of the evidence ratios were substantially smaller than the Bayes Factors from the frequentist model, and smaller than the evidence ratios from the full Bayesian model with simpler random effects (see Table x), suggesting that substantial variance in the data is accounted for by shared methodological decisions within experiments and papers. (Note that the 26 conditions from this task came from just 2 papers). Nevertheless, the Bayes Factor between these two full models with identical fixed effects and varying (simple vs complex) random effects substantially favored the simple random effects structure (BF = 1998079.74). Altogether, these results suggest that although adding random slopes for conditions and experiments accounted for variance in infants’ looking behavior, simple random effects structure presented in the frequentist analysis better accounts for the data. (One caveat to this interpretation is that the number of conditions and papers were limited - only 2 papers with 7 and 5 conditions each.) In the Bayesian version of this model, the only effects with posterior probabilities greater than 0.95 were sticky mittens training, causal action, and seeing a constraint agent during habituation, which largely agree with the findings from the frequentist analysis.
+The intercept only model (`look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper)`) provided moderate against the hypothesis that there is a looking preference  than 0 `r report.brms(constraints.brms.intercept.results[[1]],1,3)`.  The full model with complex random effects (`look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper)`) yielded qualitatively similar results to the frequentist model (see Table x): of all the predictors, infant age (`r report.brms(constraints.brms.full.results[[1]],1,3)`), and seeing an action that caused an observable outcome on contact (`r report.brms(constraints.brms.full.results[[1]],3,3)`) had the highest predictive power on infants’ looking behavior, followed by a manipulation that picked out control conditions (`r report.brms(constraints.brms.full.results[[1]],7,3)`), and then sticky mittens training (`r report.brms(constraints.brms.full.results[[1]],2,3)`). However, like in the goals task, the confidence interval over these estimates included 0, and the size of the evidence ratios were substantially smaller than the Bayes Factors from the frequentist model, and smaller than the evidence ratios from the full Bayesian model with simpler random effects (see Table x), suggesting that substantial variance in the data is accounted for by shared methodological decisions within experiments and papers. (Note that the 26 conditions from this task came from just 2 papers). Nevertheless, the Bayes Factor between these two full models with identical fixed effects and varying (simple vs complex) random effects substantially favored the simple random effects structure (BF = `r constraints.compare.rfx[[1]]`). Altogether, these results suggest that although adding random slopes for conditions and experiments accounted for variance in infants’ looking behavior, simple random effects structure presented in the frequentist analysis better accounts for the data. (One caveat to this interpretation is that the number of conditions and papers were limited - only 2 papers with 7 and 5 conditions each.) In the Bayesian version of this model, the only effects with posterior probabilities greater than 0.95 were sticky mittens training (`r report.brms(constraints.brms.full.simplerfx.results[[1]],2,3)`), causal action (`r report.brms(constraints.brms.full.simplerfx.results[[1]],3,3)`), and seeing a constraint agent during habituation (`r report.brms(constraints.brms.full.simplerfx.results[[1]],7,3)`), which accord with the findings from the frequentist analysis.
