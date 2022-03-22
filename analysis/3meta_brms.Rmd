@@ -61,95 +61,13 @@ constraints$training_yesno <- relevel(constraints$training_yesno, ref = "yes")
 constraints$action_causal <- relevel(constraints$action_causal, ref = "yes")
 
 goals$action_consequence <- relevel(goals$action_consequence, ref = "none")
-goals$agent <- factor(goals$agent, levels=c("object", "person", "hand")) # last level gets dropped in model estimates
+goals$agent <- factor(goals$agent, levels=c("animate", "person", "hand")) # last level gets dropped in model estimates
 goals$training_yesno <- relevel(goals$training_yesno, ref = "yes")
 goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visible_fam, ref = "yes")
 ```
 
 
 # Exploratory Analysis
-## Visualization
-
-```{r}
-ind.data.expunexp <- ind.data %>%
-  gather(test_event, look_sec, exp_look:unexp_look) %>%
-  mutate(look_logsec = log(look_sec))
-
-exp.look <- ind.data.expunexp %>% filter(test_event == "exp_look") %>% select(look_sec) %>% as.vector()
-unexp.look <- ind.data.expunexp %>% filter(test_event == "unexp_look") %>% select(look_sec) %>% as.vector()
-
-hist(exp.look$look_sec)
-hist(unexp.look$look_sec)
-```
-
-```{r}
-ind.data.long <- ind.data %>%
-  gather(look_type, look_sec, unexp_look:exp_look) %>%
-  mutate(look_log = log(look_sec))
-
-(eplot1 <- ggplot(ind.data, aes(x = log(exp_look), y=log(unexp_look))) +
-    geom_point() +
-  geom_smooth(method = "glm")+
-  xlab("Looking to expected test events (log sec)")+
-  ylab("Looking to unexpected test events (log sec)")+
-  facet_wrap(paper~PI_group, nrow=2)+
-  theme_cowplot(10)+
-  background_grid()+
-  labs(subtitle = "Looking in log seconds for expected vs unexpected test event \nbroken down by paper and lab")
-)
-
-(eplot2 <- ggplot(ind.data.long, aes(x = ageday, y=look_log)) +
-    geom_point(aes(colour = paper, alpha=.5)) +
-    geom_smooth(aes(colour = paper, alpha=.5), method = "glm")+
-    ylab("Looking time (log sec)")+
-    facet_wrap(~task+action_causal+look_type, nrow=2)+
-    theme_cowplot(10)+
-    background_grid()+
-    labs(subtitle = "Looking in log seconds vs age, broken down by task, \ntest event, and whether actions were causal or not")
-)
-
-(eplot3 <- ggplot(ind.data.long, aes(x = ageday, y=look_log)) +
-    geom_point(aes(colour = paper, alpha=.5)) +
-    geom_smooth(aes(colour = paper, alpha=.5), method = "glm")+
-    # geom_smooth(method = "lm")+
-    ylab("Looking time (log sec)")+
-    facet_wrap(~task+training_yesno+look_type, nrow=2)+
-    theme_cowplot(10)+
-    background_grid()+
-    labs(subtitle = "Looking in log seconds vs age, broken down by task, \ntest event, and whether there was action training")
-)
-
-(eplot4 <- ggplot(ind.data.long %>%
-                    filter(task == "goals"), aes(x = ageday, y=look_log)) +
-    geom_point(aes(colour = paper, alpha=.5)) +
-    geom_smooth(aes(colour = paper, alpha=.5), method = "glm")+
-    # geom_smooth(method = "lm")+
-    ylab("Looking time (log sec)")+
-    facet_wrap(~location_object_goal_ambiguous+look_type, nrow=1)+
-    theme_cowplot(10)+
-    background_grid()+
-    labs(subtitle = "Looking in log seconds vs age, in the goals task, \nbroken down by whether the goal was ambiguous")
-)
-```
-
-```{r}
-(eplot6 <- ggplot(ind.data.long, aes(x = look_type, y=look_log)) +
-    geom_boxplot()+
-    geom_point(aes(colour = paper, alpha=.5)) +
-    # geom_smooth(aes(colour = paper, alpha=.5), method = "glm")+
-    # geom_smooth(method = "lm")+
-    ylab("Looking time (log sec)")+
-    facet_wrap(~task+training_yesno, nrow=2)+
-    theme_cowplot(10)+
-    background_grid()+
-    labs(subtitle = "Looking in log seconds vs age, broken down by task, \ntest event, and whether there was action training")
-)
-```
-
-```{r}
-hist(ind.data$look_pref)
-```
-
 ## Various attempts to make the frequentist setting work (not successful)
 ```{r, eval=FALSE}
 
@@ -277,9 +195,6 @@ report.brms <- function(df, index, places) {
 }
 ```
 
-
-
-
 ### Goals Task
 ```{r}
 #  not run, uncomment to reproduce results
@@ -298,7 +213,7 @@ report.brms <- function(df, index, places) {
 goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
 # shinystan::launch_shinystan(goals.brms.intercept)
 summary(goals.brms.intercept)
-pp_check(goals.brms.intercept, nsamples=100)
+pp_check(goals.brms.intercept, ndraws=10)
 goals.brms.intercept.diag <- loo(goals.brms.intercept)
 plot(goals.brms.intercept.diag)
 
@@ -329,7 +244,7 @@ goals_hypothesis_vector <- c("ageday < 0",
 goals.brms.full <- readRDS("goals.brms.full.rds")
 # shinystan::launch_shinystan(goals.brms.full)
 summary(goals.brms.full)
-pp_check(goals.brms.full, nsamples=100)
+pp_check(goals.brms.full, nsamples=10)
 goals.brms.full.diag <- loo(goals.brms.full)
 plot(goals.brms.full.diag)
 
@@ -352,7 +267,7 @@ goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vecto
 goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
 # shinystan::launch_shinystan(goals.brms.full.simplerfx)
 summary(goals.brms.full.simplerfx)
-pp_check(goals.brms.full.simplerfx, nsamples=100)
+pp_check(goals.brms.full.simplerfx, ndraws=10)
 goals.brms.full.simplerfx.diag <- loo(goals.brms.full.simplerfx)
 plot(goals.brms.full.simplerfx.diag)
 
