@@ -1,5 +1,14 @@
 This github repository contains all the data and code needed to reproduce the figures and results from the paper 'Knowing before doing: Review and mega-analysis of action understanding in pre-reaching infants"
 
+## High level directory structure
+- `analysis` - folder including all data and code
+- `analysis/formatted_data` - csv and codebook for data from 8 included papers
+- `analysis/orig_data` - data as originally submitted
+- `analysis/ma_study_designs.csv` - csv of study designs for each condition, see [codebook](https://docs.google.com/spreadsheets/d/1-tEF2RZS6OjN8_kEeWTIHrI-lr5VpvC_58wk4X7YUC0/edit#gid=1931065704)
+- `analysis/ma_study_data.csv` - csv of looking time preference (unexpected - expected) for each subject for each condition
+- `analysis/fulldata.csv` - csv combining information from `ma_study_designs.csv` and `ma_study_data.csv`, see scripts to reproduce
+- `*.rds` - brms models
+
     .
     ├── README.md
     ├── analysis
