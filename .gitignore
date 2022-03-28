@@ -4,3 +4,5 @@
 .Ruserdata
 analysis/ma_study_data.csv
 formatted_data/csv_and_codebook/choi_ongoing*
+submissions/
+instructions.md

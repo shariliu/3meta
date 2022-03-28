@@ -1,5 +1,5 @@
 ---
-title: "MetaLab Challenge Script"
+title: "Summary statistics over each study"
 author: "Shari Liu"
 date: "10/1/2020"
 output: html_document
@@ -168,7 +168,7 @@ knitr::kable(choi2018_descriptives)
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (unpublished). Ongoing project.
 
 ```{r choi_ongoing}
-choi_ongoing <- read.csv(file="formatted_data/csv/choi_ongoing.csv", header=TRUE) %>%
+choi_ongoing <- read.csv(file="formatted_data/csv_and_codebook/choi_ongoing.csv", header=TRUE) %>%
     mutate(experiment = case_when(condition=="Equidistant" ~"Exp.1",
                                 condition=="Near-target" ~"Exp.1",
                                 condition=="Far-target" ~ "Exp.1"),
@@ -204,7 +204,7 @@ knitr::kable(choi_ongoing_descriptives)
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
 
 ```{r liu2019}
-liu2019 <- read.csv(file="formatted_data/csv/skerry2013_liu2019.csv") %>%
+liu2019 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.csv") %>%
   filter(paper=="LBS")%>%
   mutate(MA_condition=case_when(experiment== "Exp.1" ~ "1_pickupglove",
                                 experiment== "Exp.2" ~ "2_pickupbarehand",
