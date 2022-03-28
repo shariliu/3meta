@@ -1,4 +1,4 @@
-This github repository contains all the data and code needed to reproduce the figures and results from the paper 'Knowing before doing: Review and mega-analysis of action understanding in pre-reaching infants"
+This github repository contains all the data and code needed to reproduce the figures and results from the paper 'Knowing before doing: Review and mega-analysis of action understanding in pre-reaching infants'
 
 ## High level directory structure
 - `analysis` - folder including all data and code
@@ -7,7 +7,9 @@ This github repository contains all the data and code needed to reproduce the fi
 - `analysis/ma_study_designs.csv` - csv of study designs for each condition, see [codebook](https://docs.google.com/spreadsheets/d/1-tEF2RZS6OjN8_kEeWTIHrI-lr5VpvC_58wk4X7YUC0/edit#gid=1931065704)
 - `analysis/ma_study_data.csv` - csv of looking time preference (unexpected - expected) for each subject for each condition
 - `analysis/fulldata.csv` - csv combining information from `ma_study_designs.csv` and `ma_study_data.csv`, see scripts to reproduce
+- Analysis scripts `.Rmd and .html`: `ma_1` (script for mega-analysis), `descriptives_ESs` (tidying data and getting descriptives like N) `3meta_brms` (exploratory Bayesian)
 - `*.rds` - brms models
+
 
 ```
     .
@@ -31,8 +33,6 @@ This github repository contains all the data and code needed to reproduce the fi
     │   ├── constraints.brms.intercept.rds
     │   ├── constraints.brms.intercept_gaussian.rds
     │   ├── constraints.brms.training_gaussian.rds
-    │   ├── descriptives.Rmd
-    │   ├── descriptives.html
     │   ├── descriptives_ESs.Rmd
     │   ├── descriptives_ESs.html
     │   ├── figures
