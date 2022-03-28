@@ -9,6 +9,7 @@ This github repository contains all the data and code needed to reproduce the fi
 - `analysis/fulldata.csv` - csv combining information from `ma_study_designs.csv` and `ma_study_data.csv`, see scripts to reproduce
 - `*.rds` - brms models
 
+```
     .
     ├── README.md
     ├── analysis
@@ -89,6 +90,7 @@ This github repository contains all the data and code needed to reproduce the fi
     │       ├── woo_scg-study3-wide.csv
     │       ├── woo_unpublished_study3.csv
     │       └── woo_unpublished_study3_codebook.csv
+```
 
 ## Resources:
 1. [Metalab](http://metalab.stanford.edu/) including information about the [contribution challenge](https://docs.google.com/document/d/1WH6y-7Hq-BRs7PAfH7jJY8qvPdBcy8IeHxfXeaqAJUI/edit)
