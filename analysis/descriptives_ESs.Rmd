@@ -12,12 +12,34 @@ options(scipen = 0, digits = 2)
 ## load required packages
 ipak <- function (pkg) {
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg)) 
+  if (length(new.pkg))
     install.packages(new.pkg, dependencies = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse", "Hmisc", "lattice", "multcomp", "lsmeans", "schoRsch", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "plyr", "dplyr","patchwork", "wesanderson", "MuMIn", "devtools", "dplyr")
+packages <-
+  c(
+    "tidyverse",
+    "Hmisc",
+    "lattice",
+    "multcomp",
+    "lsmeans",
+    "schoRsch",
+    "influence.ME",
+    "lme4",
+    "effects",
+    "lmerTest",
+    "cowplot",
+    "irr",
+    "simr",
+    "plyr",
+    "dplyr",
+    "patchwork",
+    "wesanderson",
+    "MuMIn",
+    "devtools",
+    "dplyr"
+  )
 
 ipak(packages)
 ```
@@ -30,25 +52,35 @@ options(digits=2)
 ### Luo, Y. (2011). Three-month-old infants attribute goals to a non-human agent. Developmental Science, 14(2), 453–460.
 
 ```{r luo2011}
-luo2011 <- read.csv(file = "formatted_data/csv_and_codebook/luo2011.csv", header=TRUE) %>%
-  mutate(experiment = case_when(condition=="one-object" ~ "Exp.1",
-                                condition=="two-object" ~ "Exp.1",
-                                condition=="different-positions" ~ "Exp.2"),
-         MA_condition = case_when(condition=="one-object" ~ "1_oneobject",
-                                condition=="two-object" ~ "1_twoobject",
-                                condition=="different-positions" ~ "2_differentpositions")
+luo2011 <-
+  read.csv(file = "formatted_data/csv_and_codebook/luo2011.csv", header =
+             TRUE) %>%
+  mutate(
+    experiment = case_when(
+      condition == "one-object" ~ "Exp.1",
+      condition == "two-object" ~ "Exp.1",
+      condition == "different-positions" ~ "Exp.2"
+    ),
+    MA_condition = case_when(
+      condition == "one-object" ~ "1_oneobject",
+      condition == "two-object" ~ "1_twoobject",
+      condition == "different-positions" ~ "2_differentpositions"
+    )
   ) %>%
   mutate(exp_look = old.goal, unexp_look = new.goal)
 
-luo2011_descriptives <- luo2011 %>% 
+luo2011_descriptives <- luo2011 %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(gender=="F") / n_babies)
+  dplyr::summarize(
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(gender == "F") / n_babies
+  )
 
 knitr::kable(luo2011_descriptives)
 ```
@@ -56,29 +88,42 @@ knitr::kable(luo2011_descriptives)
 ### Skerry, A. E., Carey, S. E., & Spelke, E. S. (2013). First-person action experience reveals sensitivity to action efficiency in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 110(46), 18728–18733.
 
 ```{r skerry2013}
-skerry2013 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.csv") %>%
-  filter(paper=="SCS")%>%
-  mutate(MA_condition=case_when(experiment== "SCS.Exp.1" & training == "effective.training" ~ "1_effectiveactiontraining",
-                                experiment== "SCS.Exp.2" & training == "ineffective.training" ~ "2_ineffectiveactiontraining",
-                                experiment== "SCS.Exp.3" & training == "no.training" ~ "3_notraining",
-                                experiment== "SCS.Exp.4" & hab == "constrained" ~ "4_constrainedactionhabituation",
-                                experiment== "SCS.Exp.5" & hab == "unconstrained" ~ "5_unconstrainedactionhabituation"
-                                )
-         ) %>%
-    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff)
+skerry2013 <-
+  read.csv(file = "formatted_data/csv_and_codebook/skerry2013_liu2019.csv") %>%
+  filter(paper == "SCS") %>%
+  mutate(
+    MA_condition = case_when(
+      experiment == "SCS.Exp.1" &
+        training == "effective.training" ~ "1_effectiveactiontraining",
+      experiment == "SCS.Exp.2" &
+        training == "ineffective.training" ~ "2_ineffectiveactiontraining",
+      experiment == "SCS.Exp.3" &
+        training == "no.training" ~ "3_notraining",
+      experiment == "SCS.Exp.4" &
+        hab == "constrained" ~ "4_constrainedactionhabituation",
+      experiment == "SCS.Exp.5" &
+        hab == "unconstrained" ~ "5_unconstrainedactionhabituation"
+    )
+  ) %>%
+  mutate(unexp_look_prop = prop.ineff.all,
+         exp_look = avg.eff,
+         unexp_look = avg.ineff)
 
 
-skerry2013_descriptives <- skerry2013 %>% 
+skerry2013_descriptives <- skerry2013 %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1_prop = mean(unexp_look_prop, na.rm=TRUE),
-                   sd_1_prop = sd(unexp_look_prop, na.rm=TRUE),
-                   x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(sex=="f") / n_babies)
+  dplyr::summarize(
+    x_1_prop = mean(unexp_look_prop, na.rm = TRUE),
+    sd_1_prop = sd(unexp_look_prop, na.rm = TRUE),
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(sex == "f") / n_babies
+  )
 
 knitr::kable(skerry2013_descriptives)
 ```
@@ -86,52 +131,72 @@ knitr::kable(skerry2013_descriptives)
 ### Gerson, S. A., & Woodward, A. L. (2014a). The joint role of trained, untrained, and observed actions at the origins of goal recognition. Infant Behavior & Development, 37(1), 94–104.
 
 ```{r gerson2014a}
-gerson2014a <- read.csv(file="formatted_data/csv_and_codebook/gerson2014a_ibd.csv", header=TRUE) %>%
-    mutate(experiment = case_when(Condition=="Active" ~"Exp.1",
-                                Condition=="Observation" ~"Exp.1",
-                                Condition=="Control" ~ "Exp.1"),
-         MA_condition = case_when(Condition=="Active" ~"1_Active",
-                                Condition=="Observation" ~"1_Observation",
-                                Condition=="Control" ~ "1_Control"),
-         unexp_look = NewGoal_Avg,
-         exp_look = OldGoal_Avg
-         )
+gerson2014a <-
+  read.csv(file = "formatted_data/csv_and_codebook/gerson2014a_ibd.csv", header =
+             TRUE) %>%
+  mutate(
+    experiment = case_when(
+      Condition == "Active" ~ "Exp.1",
+      Condition == "Observation" ~ "Exp.1",
+      Condition == "Control" ~ "Exp.1"
+    ),
+    MA_condition = case_when(
+      Condition == "Active" ~ "1_Active",
+      Condition == "Observation" ~ "1_Observation",
+      Condition == "Control" ~ "1_Control"
+    ),
+    unexp_look = NewGoal_Avg,
+    exp_look = OldGoal_Avg
+  )
 
 gerson2014a_descriptives <- gerson2014a %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(Sex=="Female") / n_babies)
+  dplyr::summarize(
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(Sex == "Female") / n_babies
+  )
 
 knitr::kable(gerson2014a_descriptives)
 ```
 ### Gerson, S. A., & Woodward, A. L. (2014b). Learning from their own actions: the unique effect of producing actions on infants’ action understanding. Child Development, 85(1), 264–277.
 
 ```{r gerson2014b}
-gerson2014b <- read.csv(file="formatted_data/csv_and_codebook/gerson2014b_cd.csv", header=TRUE) %>%
-  mutate(experiment = case_when(Condition=="Act" ~"Exp.1",
-                                Condition=="Obs" ~"Exp.1",
-                                Condition=="gen" ~ "Exp.2"),
-         MA_condition = case_when(Condition=="Act" ~"1_Active",
-                                Condition=="Obs" ~"1_Observational",
-                                Condition=="gen" ~ "2_Generalization"),
-         unexp_look = NewGoal_Avg,
-         exp_look = OldGoal_Avg
-         )
+gerson2014b <-
+  read.csv(file = "formatted_data/csv_and_codebook/gerson2014b_cd.csv", header =
+             TRUE) %>%
+  mutate(
+    experiment = case_when(
+      Condition == "Act" ~ "Exp.1",
+      Condition == "Obs" ~ "Exp.1",
+      Condition == "gen" ~ "Exp.2"
+    ),
+    MA_condition = case_when(
+      Condition == "Act" ~ "1_Active",
+      Condition == "Obs" ~ "1_Observational",
+      Condition == "gen" ~ "2_Generalization"
+    ),
+    unexp_look = NewGoal_Avg,
+    exp_look = OldGoal_Avg
+  )
 
 gerson2014b_descriptives <- gerson2014b %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(Sex=="f") / n_babies)
+  dplyr::summarize(
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(Sex == "f") / n_babies
+  )
 
 knitr::kable(gerson2014a_descriptives)
 ```
@@ -139,28 +204,41 @@ knitr::kable(gerson2014a_descriptives)
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (2018). How do 3-month-old infants attribute preferences to a human agent? Journal of Experimental Child Psychology, 172, 96–106.
 
 ```{r choi2018}
-choi2018 <- read.csv(file="formatted_data/csv_and_codebook/choi2018.csv", header=TRUE) %>%
-    mutate(experiment = case_when(condition=="Two-object" ~"Exp.1",
-                                condition=="One-object" ~"Exp.1",
-                                condition=="Hidden" ~ "Exp.1"),
-         MA_condition = case_when(condition=="Two-object" ~"1_twoobject",
-                                condition=="One-object" ~"1_oneobject",
-                                condition=="Hidden" ~ "1_hidden")) %>%
-  mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
-         Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
+choi2018 <-
+  read.csv(file = "formatted_data/csv_and_codebook/choi2018.csv", header =
+             TRUE) %>%
+  mutate(
+    experiment = case_when(
+      condition == "Two-object" ~ "Exp.1",
+      condition == "One-object" ~ "Exp.1",
+      condition == "Hidden" ~ "Exp.1"
+    ),
+    MA_condition = case_when(
+      condition == "Two-object" ~ "1_twoobject",
+      condition == "One-object" ~ "1_oneobject",
+      condition == "Hidden" ~ "1_hidden"
+    )
+  ) %>%
+  mutate(
+    New.goal_Avg = rowMeans(cbind(New.goal_1, New.goal_2), na.rm = TRUE),
+    Old.goal_Avg = rowMeans(cbind(Old.goal_1, Old.goal_2), na.rm =
+                              TRUE)
+  ) %>%
   mutate(unexp_look = New.goal_Avg,
-         exp_look = Old.goal_Avg
-         )
+         exp_look = Old.goal_Avg)
 
 choi2018_descriptives <- choi2018 %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(sex=="F") / n_babies)
+  dplyr::summarize(
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(sex == "F") / n_babies
+  )
 
 knitr::kable(choi2018_descriptives)
 ```
@@ -168,35 +246,48 @@ knitr::kable(choi2018_descriptives)
 ### Choi, Y.-J., Mou, Y., & Luo, Y. (unpublished). Ongoing project.
 
 ```{r choi_ongoing}
-choi_ongoing <- read.csv(file="formatted_data/csv_and_codebook/choi_ongoing.csv", header=TRUE) %>%
-    mutate(experiment = case_when(condition=="Equidistant" ~"Exp.1",
-                                condition=="Near-target" ~"Exp.1",
-                                condition=="Far-target" ~ "Exp.1"),
-         MA_condition = case_when(condition=="Equidistant" ~"1_equidistant",
-                                condition=="Near-target" ~"1_neartarget",
-                                condition=="Far-target" ~ "1_fartarget")) %>%
-  separate(age_md, into = c("age_m", "age_d"), sep=",") %>%
+choi_ongoing <-
+  read.csv(file = "formatted_data/csv_and_codebook/choi_ongoing.csv", header =
+             TRUE) %>%
+  mutate(
+    experiment = case_when(
+      condition == "Equidistant" ~ "Exp.1",
+      condition == "Near-target" ~ "Exp.1",
+      condition == "Far-target" ~ "Exp.1"
+    ),
+    MA_condition = case_when(
+      condition == "Equidistant" ~ "1_equidistant",
+      condition == "Near-target" ~ "1_neartarget",
+      condition == "Far-target" ~ "1_fartarget"
+    )
+  ) %>%
+  separate(age_md, into = c("age_m", "age_d"), sep = ",") %>%
   mutate(age_m = as.numeric(age_m),
          age_d = as.numeric(age_d)) %>%
-  mutate(ageday= 30.44 * age_m + age_d) %>%
+  mutate(ageday = 30.44 * age_m + age_d) %>%
   #TODO figure out what the DV was in this study, avg or individual looks?
-  mutate(New.goal_Avg = rowMeans(cbind(New.goal_1,New.goal_2), na.rm=TRUE), 
-         Old.goal_Avg = rowMeans(cbind(Old.goal_1,Old.goal_2), na.rm=TRUE)) %>%
+  mutate(
+    New.goal_Avg = rowMeans(cbind(New.goal_1, New.goal_2), na.rm = TRUE),
+    Old.goal_Avg = rowMeans(cbind(Old.goal_1, Old.goal_2), na.rm =
+                              TRUE)
+  ) %>%
   mutate(unexp_look = New.goal_Avg,
-         exp_look = Old.goal_Avg
-         ) 
+         exp_look = Old.goal_Avg)
 
 choi_ongoing_descriptives <- choi_ongoing %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(sex=="F") / n_babies,
-                   m_age= mean(ageday),
-                   range_age = range(ageday)[2] - range(ageday)[1])
+  dplyr::summarize(
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(sex == "F") / n_babies,
+    m_age = mean(ageday),
+    range_age = range(ageday)[2] - range(ageday)[1]
+  )
 
 knitr::kable(choi_ongoing_descriptives)
 ```
@@ -204,29 +295,41 @@ knitr::kable(choi_ongoing_descriptives)
 ### Liu, S., Brooks, N. B., & Spelke, E. S. (2019). Origins of the concepts cause, cost, and goal in prereaching infants. Proceedings of the National Academy of Sciences of the United States of America, 116(36), 17747–17752.
 
 ```{r liu2019}
-liu2019 <- read.csv(file="formatted_data/csv_and_codebook/skerry2013_liu2019.csv") %>%
-  filter(paper=="LBS")%>%
-  mutate(MA_condition=case_when(experiment== "Exp.1" ~ "1_pickupglove",
-                                experiment== "Exp.2" ~ "2_pickupbarehand",
-                                experiment== "Exp.3" & hab == "constrained" ~ "3_statechangebarrier",
-                                experiment== "Exp.3" & hab == "unconstrained" ~ "3_statechangenobarrier",
-                                experiment== "Exp.4" ~ "4_statechangenotcausal",
-                                experiment== "Exp.5" & causal == "yes" ~ "5_statechangecausal",
-                                experiment== "Exp.5" & causal == "no" ~ "5_statechangenotcausal"
-                                )
-         ) %>%
-    mutate(unexp_look_prop = prop.ineff.all, exp_look = avg.eff, unexp_look = avg.ineff)
+liu2019 <-
+  read.csv(file = "formatted_data/csv_and_codebook/skerry2013_liu2019.csv") %>%
+  filter(paper == "LBS") %>%
+  mutate(
+    MA_condition = case_when(
+      experiment == "Exp.1" ~ "1_pickupglove",
+      experiment == "Exp.2" ~ "2_pickupbarehand",
+      experiment == "Exp.3" &
+        hab == "constrained" ~ "3_statechangebarrier",
+      experiment == "Exp.3" &
+        hab == "unconstrained" ~ "3_statechangenobarrier",
+      experiment == "Exp.4" ~ "4_statechangenotcausal",
+      experiment == "Exp.5" &
+        causal == "yes" ~ "5_statechangecausal",
+      experiment == "Exp.5" &
+        causal == "no" ~ "5_statechangenotcausal"
+    )
+  ) %>%
+  mutate(unexp_look_prop = prop.ineff.all,
+         exp_look = avg.eff,
+         unexp_look = avg.ineff)
 
-liu2019_descriptives <- liu2019 %>% 
+liu2019_descriptives <- liu2019 %>%
   group_by(MA_condition) %>%
-  dplyr::summarize(x_1_prop = mean(unexp_look_prop, na.rm=TRUE),
-                   sd_1_prop = sd(unexp_look_prop, na.rm=TRUE),
-                   x_1 = mean(unexp_look, na.rm=TRUE),
-                   x_2 = mean(exp_look, na.rm=TRUE),
-                   sd_1 = sd(unexp_look, na.rm=TRUE),
-                   sd_2 = sd(exp_look, na.rm=TRUE),
-                   r = cor(unexp_look,exp_look,method="pearson", use="pairwise.complete.obs"),
-                   n_babies = n(),
-                   prop_girls = sum(sex=="f") / n_babies)
+  dplyr::summarize(
+    x_1_prop = mean(unexp_look_prop, na.rm = TRUE),
+    sd_1_prop = sd(unexp_look_prop, na.rm = TRUE),
+    x_1 = mean(unexp_look, na.rm = TRUE),
+    x_2 = mean(exp_look, na.rm = TRUE),
+    sd_1 = sd(unexp_look, na.rm = TRUE),
+    sd_2 = sd(exp_look, na.rm = TRUE),
+    r = cor(unexp_look, exp_look, method = "pearson", use =
+              "pairwise.complete.obs"),
+    n_babies = n(),
+    prop_girls = sum(sex == "f") / n_babies
+  )
 knitr::kable(liu2019_descriptives)
 ```
