@@ -18,21 +18,46 @@ options(repos = r)
 ## load required packages
 ipak <- function (pkg) {
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg)) 
+  if (length(new.pkg))
     install.packages(new.pkg, dependencies = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("tidyverse", "lsmeans", "influence.ME", "lme4", "effects", "lmerTest", "cowplot", "irr", "simr", "patchwork", "wesanderson", "devtools", "effectsize", "mice", "rstan", "brms", "bayestestR", "rstanarm", "shinystan", "DT", "tidybayes", "distributional", "loo")
+packages <-
+  c(
+    "tidyverse",
+    "lsmeans",
+    "influence.ME",
+    "lme4",
+    "effects",
+    "lmerTest",
+    "cowplot",
+    "irr",
+    "simr",
+    "patchwork",
+    "wesanderson",
+    "devtools",
+    "effectsize",
+    "mice",
+    "rstan",
+    "brms",
+    "bayestestR",
+    "rstanarm",
+    "shinystan",
+    "DT",
+    "tidybayes",
+    "distributional",
+    "loo"
+  )
 devtools::install_github("mvuorre/brmstools")
 
 ipak(packages)
 set.seed(429)
 
 # set summed contrasts
-options(contrasts = c("contr.sum", "contr.poly")) 
+options(contrasts = c("contr.sum", "contr.poly"))
 
-# fix bs with dplyr 
+# fix bs with dplyr
 detach("package:dplyr", unload = TRUE)
 library("dplyr")
 
@@ -40,30 +65,38 @@ sessionInfo()
 ```
 
 ```{r}
-ind.data.init <- read.csv("./fulldata.csv", header=TRUE)
+ind.data.init <- read.csv("./fulldata.csv", header = TRUE)
 str(ind.data.init)
 num_cols <- c("ageday", "exp_look", "unexp_look", "look_pref")
 factor_cols <- setdiff(colnames(ind.data.init), num_cols)
 
 ind.data <- ind.data.init %>%
-  mutate_at(factor_cols,as.factor)
+  mutate_at(factor_cols, as.factor)
 str(ind.data)
 
-constraints <- ind.data %>% filter(task =="constraints")
-goals <- ind.data %>% filter(task =="goals")
-constraints <- ind.data %>% filter(task =="constraints")
+constraints <- ind.data %>% filter(task == "constraints")
+goals <- ind.data %>% filter(task == "goals")
+constraints <- ind.data %>% filter(task == "constraints")
 
 # checking ref levels for all factors
-constraints$actor_hand <- factor(constraints$actor_hand, levels=c("bare", "gloved", "mittened")) # for summed contr last level is dropped
-constraints$action_consequence <- relevel(constraints$action_consequence, ref = "state_change")
-constraints$agent_efficient_fam <- relevel(constraints$agent_efficient_fam, ref = "yes")
-constraints$training_yesno <- relevel(constraints$training_yesno, ref = "yes")
-constraints$action_causal <- relevel(constraints$action_causal, ref = "yes")
+constraints$actor_hand <-
+  factor(constraints$actor_hand, levels = c("bare", "gloved", "mittened")) # for summed contr last level is dropped
+constraints$action_consequence <-
+  relevel(constraints$action_consequence, ref = "state_change")
+constraints$agent_efficient_fam <-
+  relevel(constraints$agent_efficient_fam, ref = "yes")
+constraints$training_yesno <-
+  relevel(constraints$training_yesno, ref = "yes")
+constraints$action_causal <-
+  relevel(constraints$action_causal, ref = "yes")
 
-goals$action_consequence <- relevel(goals$action_consequence, ref = "none")
-goals$agent <- factor(goals$agent, levels=c("animate", "person", "hand")) # last level gets dropped in model estimates
+goals$action_consequence <-
+  relevel(goals$action_consequence, ref = "none")
+goals$agent <-
+  factor(goals$agent, levels = c("animate", "person", "hand")) # last level gets dropped in model estimates
 goals$training_yesno <- relevel(goals$training_yesno, ref = "yes")
-goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visible_fam, ref = "yes")
+goals$bothobjects_present_visible_fam <-
+  relevel(goals$bothobjects_present_visible_fam, ref = "yes")
 ```
 
 
@@ -71,22 +104,36 @@ goals$bothobjects_present_visible_fam <- relevel(goals$bothobjects_present_visib
 ## Various attempts to make the frequentist setting work (not successful)
 ```{r, eval=FALSE}
 
+
 # trying to figure out whether random slopes are possible in the frequentist setting
-constraints.e1 <- lmer(data = constraints,
-     formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday)  + (1+experiment|paper), 
-     control = lmerControl(optimizer="bobyqa"))
+constraints.e1 <- lmer(
+  data = constraints,
+  formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday)  + (1 +
+                                                                                                                                      experiment | paper),
+  control = lmerControl(optimizer = "bobyqa")
+)
 
 summary(constraints.e1)
 
 
-cooks.constraints.e1 <- cooks.distance(constraints.e1, group = "subj")
-dotplot_diag(x = cooks.constraints.e1, cutoff = "internal", name = "cooks.distance",  index=constraints$subj) + ylab("Cook's distance") + xlab("subjID")
+cooks.constraints.e1 <-
+  cooks.distance(constraints.e1, group = "subj")
+dotplot_diag(
+  x = cooks.constraints.e1,
+  cutoff = "internal",
+  name = "cooks.distance",
+  index = constraints$subj
+) + ylab("Cook's distance") + xlab("subjID")
 
-constraints.e1.cooks <- constraints[which(cooks.constraints.e1 <= 4/264),]
+constraints.e1.cooks <-
+  constraints[which(cooks.constraints.e1 <= 4 / 264), ]
 
-constraints.e1.aftercooks <- lmer(data = constraints.e1.cooks,
-     formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday)  + (1+experiment|paper), 
-     control = lmerControl(optimizer="bobyqa"))
+constraints.e1.aftercooks <- lmer(
+  data = constraints.e1.cooks,
+  formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday)  + (1 +
+                                                                                                                                      experiment | paper),
+  control = lmerControl(optimizer = "bobyqa")
+)
 
 summary(constraints.e1.aftercooks)
 
@@ -96,10 +143,23 @@ summary(constraints.e1.all)
 ```
 
 ```{r, eval=FALSE}
-constraints.full.e1 <- lmer(data = constraints,
-     formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday) + (1+experiment|paper), REML=FALSE, lmerControl(optimizer="bobyqa")) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
+constraints.full.e1 <- lmer(
+  data = constraints,
+  formula = look_pref ~  training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday) + (1 +
+                                                                                                                                     experiment |
+                                                                                                                                     paper),
+  REML = FALSE,
+  lmerControl(optimizer = "bobyqa")
+) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
 
-constraints.predictors=c("training_yesno","action_causal","action_consequence","actor_hand","agent_efficient_fam","ageday")
+constraints.predictors = c(
+  "training_yesno",
+  "action_causal",
+  "action_consequence",
+  "actor_hand",
+  "agent_efficient_fam",
+  "ageday"
+)
 
 constraints.bf.e1 <- data.frame(constraints.predictors) %>%
   mutate(BF.cooks = NA,
@@ -107,11 +167,13 @@ constraints.bf.e1 <- data.frame(constraints.predictors) %>%
   rename(Fixed.Effect = constraints.predictors)
 
 for (predictor in constraints.predictors) {
-  modelform <- update(constraints.full.e1, as.formula(paste0(". ~ . -",predictor)))
-  BF <- exp((BIC(modelform) - BIC(constraints.full.e1))/2)
-  whichrow <- which(constraints.bf.e1$Fixed.Effect == as.character(predictor))
-  constraints.bf.e1[whichrow,2] <- BF
-  constraints.bf.e1[whichrow,3] <- interpret_bf(BF)
+  modelform <-
+    update(constraints.full.e1, as.formula(paste0(". ~ . -", predictor)))
+  BF <- exp((BIC(modelform) - BIC(constraints.full.e1)) / 2)
+  whichrow <-
+    which(constraints.bf.e1$Fixed.Effect == as.character(predictor))
+  constraints.bf.e1[whichrow, 2] <- BF
+  constraints.bf.e1[whichrow, 3] <- interpret_bf(BF)
 }
 
 constraints.bf.e1
@@ -119,18 +181,29 @@ constraints.bf.e1
 
 ```{r, eval=FALSE}
 # trying to figure out whether random slopes are possible in the frequentist setting
-goals.e1 <- lmer(data = goals,
-     formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam +  scale(ageday)  + (1+experiment|paper), 
-     control = lmerControl(optimizer="Nelder_Mead"))
+goals.e1 <- lmer(
+  data = goals,
+  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam +  scale(ageday)  + (1 +
+                                                                                                                                                               experiment | paper),
+  control = lmerControl(optimizer = "Nelder_Mead")
+)
 
 cooks.goals.e1 <- cooks.distance(goals.e1, group = "subj")
-dotplot_diag(x = cooks.goals.e1, cutoff = "internal", name = "cooks.distance",  index=goals$subj) + ylab("Cook's distance") + xlab("subjID")
+dotplot_diag(
+  x = cooks.goals.e1,
+  cutoff = "internal",
+  name = "cooks.distance",
+  index = goals$subj
+) + ylab("Cook's distance") + xlab("subjID")
 
-goals.e1.cooks <- goals[which(cooks.goals.e1 <= 4/386),]
+goals.e1.cooks <- goals[which(cooks.goals.e1 <= 4 / 386), ]
 
-goals.e1.aftercooks <- lmer(data = goals.e1.cooks,
-     formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam +  scale(ageday)  + (1+experiment|paper), 
-     control = lmerControl(optimizer="Nelder_Mead"))
+goals.e1.aftercooks <- lmer(
+  data = goals.e1.cooks,
+  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam +  scale(ageday)  + (1 +
+                                                                                                                                                               experiment | paper),
+  control = lmerControl(optimizer = "Nelder_Mead")
+)
 
 summary(goals.e1.aftercooks)
 plot(allEffects(goals.e1.aftercooks))
@@ -173,24 +246,26 @@ In the primary analysis, we chose to pare down the random effects structure to j
 
 ```{r}
 brms.test.hyp <- function(model, hyp.vector) {
-  results <- hypothesis(model, hyp.vector, seed = 429, alpha=.05)
+  results <- hypothesis(model, hyp.vector, seed = 429, alpha = .05)
   return(results)
 }
 
 # function that returns formatted result from a brms.test.hyp df
 report.brms <- function(df, index, places) {
   "Estimate = xx [xx, xx], Evidence Ratio = xx, Posterior Probability = xx"
-  result <- paste("Estimate = ", 
-                  round(df$Estimate[index], places),
-                  " [",
-                  round(df$CI.Lower[index], places),
-                  ", ",
-                  round(df$CI.Upper[index], places),
-                  "], Evidence Ratio = ",
-                  round(df$Evid.Ratio[index], places),
-                  ", Posterior Probability = ",
-                  round(df$Post.Prob[index], places),
-                  sep = "")
+  result <- paste(
+    "Estimate = ",
+    round(df$Estimate[index], places),
+    " [",
+    round(df$CI.Lower[index], places),
+    ", ",
+    round(df$CI.Upper[index], places),
+    "], Evidence Ratio = ",
+    round(df$Evid.Ratio[index], places),
+    ", Posterior Probability = ",
+    round(df$Post.Prob[index], places),
+    sep = ""
+  )
   return(result)
 }
 ```
@@ -213,21 +288,23 @@ report.brms <- function(df, index, places) {
 goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
 # shinystan::launch_shinystan(goals.brms.intercept)
 summary(goals.brms.intercept)
-pp_check(goals.brms.intercept, ndraws=10)
+pp_check(goals.brms.intercept, ndraws = 10)
 goals.brms.intercept.diag <- loo(goals.brms.intercept)
 plot(goals.brms.intercept.diag)
 
 
-goals.brms.intercept.results <- brms.test.hyp(goals.brms.intercept, "Intercept > 0")
+goals.brms.intercept.results <-
+  brms.test.hyp(goals.brms.intercept, "Intercept > 0")
 
-goals_hypothesis_vector <- c("ageday < 0",
-                       "training_yesno1 > 0",
-                       "location_object_goal_ambiguous1 > 0",
-                       "action_consequence1 > 0",
-                       "agent1 > 0",
-                       "agent2 > 0", 
-                       "bothobjects_present_visible_fam1 > 0"
-            )
+goals_hypothesis_vector <- c(
+  "ageday < 0",
+  "training_yesno1 > 0",
+  "location_object_goal_ambiguous1 > 0",
+  "action_consequence1 > 0",
+  "agent1 > 0",
+  "agent2 > 0",
+  "bothobjects_present_visible_fam1 > 0"
+)
 
 # goals.brms.full <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1+condition|experiment) + (1+experiment|paper),
 #                 data= goals,
@@ -244,12 +321,13 @@ goals_hypothesis_vector <- c("ageday < 0",
 goals.brms.full <- readRDS("goals.brms.full.rds")
 # shinystan::launch_shinystan(goals.brms.full)
 summary(goals.brms.full)
-pp_check(goals.brms.full, nsamples=10)
+pp_check(goals.brms.full, nsamples = 10)
 goals.brms.full.diag <- loo(goals.brms.full)
 plot(goals.brms.full.diag)
 
 
-goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
+goals.brms.full.results <-
+  brms.test.hyp(goals.brms.full, goals_hypothesis_vector)
 
 
 # goals.brms.full.simplefx  <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1|experiment) + (1|paper),
@@ -267,13 +345,15 @@ goals.brms.full.results <- brms.test.hyp(goals.brms.full, goals_hypothesis_vecto
 goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
 # shinystan::launch_shinystan(goals.brms.full.simplerfx)
 summary(goals.brms.full.simplerfx)
-pp_check(goals.brms.full.simplerfx, ndraws=10)
+pp_check(goals.brms.full.simplerfx, ndraws = 10)
 goals.brms.full.simplerfx.diag <- loo(goals.brms.full.simplerfx)
 plot(goals.brms.full.simplerfx.diag)
 
-goals.brms.full.simplerfx.results <- brms.test.hyp(goals.brms.full.simplerfx, goals_hypothesis_vector)
+goals.brms.full.simplerfx.results <-
+  brms.test.hyp(goals.brms.full.simplerfx, goals_hypothesis_vector)
 
-(goals.compare.rfx <- bayes_factor(goals.brms.full.simplerfx, goals.brms.full))
+(goals.compare.rfx <-
+    bayes_factor(goals.brms.full.simplerfx, goals.brms.full))
 ```
 
 
@@ -305,23 +385,26 @@ hist(constraints$look_pref)
 #                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.intercept,file="constraints.brms.intercept.rds")
 
-constraints.brms.intercept <- readRDS("constraints.brms.intercept.rds")
+
+constraints.brms.intercept <-
+  readRDS("constraints.brms.intercept.rds")
 # shinystan::launch_shinystan(constraints.brms.intercept)
 summary(constraints.brms.intercept)
-pp_check(constraints.brms.intercept, ndraws=100)
+pp_check(constraints.brms.intercept, ndraws = 100)
 constraints.brms.intercept.diag <- loo(constraints.brms.intercept)
 plot(constraints.brms.intercept.diag)
 
-hypothesis(constraints.brms.intercept, "Intercept < 0", alpha=.05)
+hypothesis(constraints.brms.intercept, "Intercept < 0", alpha = .05)
 
-constraints_hypothesis_vector <- c("ageday > 0",
-                       "training_yesno1 > 0",
-                       "action_causal1 > 0",
-                       "action_consequence1 > 0",
-                       "actor_hand1 > 0",
-                       "actor_hand2 > 0", 
-                       "agent_efficient_fam1 > 0"
-            )
+constraints_hypothesis_vector <- c(
+  "ageday > 0",
+  "training_yesno1 > 0",
+  "action_causal1 > 0",
+  "action_consequence1 > 0",
+  "actor_hand1 > 0",
+  "actor_hand2 > 0",
+  "agent_efficient_fam1 > 0"
+)
 
 # constraints.brms.full <- brm(formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1+condition|experiment) + (1|paper),
 #                 data= constraints,
@@ -354,23 +437,30 @@ plot(constraints.brms.full.diag)
 #                 sample_prior = TRUE,
 #                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
-constraints.brms.full.simplerfx <- readRDS("constraints.brms.full.simplerfx.rds")
+constraints.brms.full.simplerfx <-
+  readRDS("constraints.brms.full.simplerfx.rds")
 # shinystan::launch_shinystan(constraints.brms.full.simplerfx)
-constraints.brms.full.simplerfx.diag <- loo(constraints.brms.full.simplerfx)
+constraints.brms.full.simplerfx.diag <-
+  loo(constraints.brms.full.simplerfx)
 plot(constraints.brms.full.simplerfx.diag)
-pp_check(constraints.brms.full.simplerfx, ndraws=100)
+pp_check(constraints.brms.full.simplerfx, ndraws = 100)
 summary(constraints.brms.full.simplerfx)
 
 
-constraints.brms.intercept.results <- brms.test.hyp(constraints.brms.intercept, "Intercept > 0")
+constraints.brms.intercept.results <-
+  brms.test.hyp(constraints.brms.intercept, "Intercept > 0")
 
-constraints.brms.full.simplerfx.results <- brms.test.hyp(constraints.brms.full.simplerfx, constraints_hypothesis_vector)
+constraints.brms.full.simplerfx.results <-
+  brms.test.hyp(constraints.brms.full.simplerfx,
+                constraints_hypothesis_vector)
 
-constraints.brms.full.results <- brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
+constraints.brms.full.results <-
+  brms.test.hyp(constraints.brms.full, constraints_hypothesis_vector)
 
-(constraints.compare.rfx <- bayes_factor(constraints.brms.full.simplerfx, constraints.brms.full))
-
-
+(
+  constraints.compare.rfx <-
+    bayes_factor(constraints.brms.full.simplerfx, constraints.brms.full)
+)
 
 ```
 
