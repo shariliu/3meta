@@ -263,8 +263,8 @@ summarySE <-
       .fun = function(xx, col) {
         c(
           N    = length2(xx[[col]], na.rm = na.rm),
-          mean = mean   (xx[[col]], na.rm = na.rm),
-          sd   = sd     (xx[[col]], na.rm = na.rm)
+          mean = mean(xx[[col]], na.rm = na.rm),
+          sd   = sd(xx[[col]], na.rm = na.rm)
         )
       },
       measurevar
@@ -547,8 +547,7 @@ dist2 <- ggplot(ind.data, aes(x = look_pref, fill = paper)) +
   theme_cowplot(12) +
   xlab("Looking time Preference in seconds (unexpected - expected)")
 
-(dist1 |
-    dist2)  + plot_layout(widths = c(1, 4)) + plot_annotation(tag_levels = 'A')
+(dist1 | dist2)  + plot_layout(widths = c(1, 4)) + plot_annotation(tag_levels = 'A')
 ```
 Data appear to be normally distributed, no need to log transform.
 
@@ -595,8 +594,6 @@ plot1
 
 
 ```{r}
-
-
 expunexp <-
   ggplot(ind.data, aes(x = log(exp_look), y = log(unexp_look))) +
   geom_point() +
@@ -743,8 +740,7 @@ constraints.baseline.data <- constraints %>%
                           "2_pickupbarehand"))
 
 constraints.b1 <- lmer(data = constraints.baseline.data,
-                       formula = look_pref ~ 1 + ageday + (1 |
-                                                             condition))
+                       formula = look_pref ~ 1 + ageday + (1|condition))
 summary(constraints.b1)
 
 resid_panel(
@@ -785,8 +781,7 @@ excluded.subs <- c("90", "553", "86")
 constraints.b1.cooks <- lmer(
   data = constraints.baseline.data %>%
     filter(!subj %in% excluded.subs),
-  formula = look_pref ~ 1 + ageday + (1 |
-                                        condition)
+  formula = look_pref ~ 1 + ageday + (1|condition)
 )
 
 
@@ -809,8 +804,7 @@ For standard versions of the constraints task, we found no differential looking 
 
 constraints.m1 <- lmer(
   data = constraints,
-  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1 |
-                                                                                                                             condition) + (1 | experiment) + (1 | paper)
+  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper)
 )
 
 summary(constraints.m1)
@@ -881,16 +875,14 @@ knitr::kable(constraints.where.influential)
 
 constraints.m1.cooks <- lmer(
   data = constraints.cooks,
-  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1 |
-                                                                                                                             condition) + (1 | experiment) + (1 | paper),
+  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1 | experiment) + (1 | paper),
   REML = FALSE
 )
 summary(constraints.m1.cooks)
 
 constraints.m1.cooks.beta <- lmer(
   data = constraints.cooks,
-  formula = scale(look_pref) ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday) + (1 |
-                                                                                                                                           condition) + (1 | experiment) + (1 | paper),
+  formula = scale(look_pref) ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + scale(ageday) + (1 |condition) + (1 | experiment) + (1 | paper),
   REML = FALSE
 )
 summary(constraints.m1.cooks.beta)
@@ -935,6 +927,12 @@ constraints.interventions.cooks <- cbind(
 
 sjPlot::tab_model(constraints.m1.cooks.beta, show.stat = TRUE)
 summary(constraints.m1.cooks.beta)
+
+
+constraints.b1.cooks.cohensd <- lme.dscore(constraints.m1.cooks.beta,
+           data = constraints.cooks,
+           type = "lme4") %>% select(d) %>% as.numeric()
+
 ```
 
 ### Generating BFs
@@ -942,13 +940,10 @@ summary(constraints.m1.cooks.beta)
 ```{r}
 constraints.full.cooks <- lmer(
   data = constraints.cooks,
-  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1 |
-                                                                                                                             condition) + (1 |
-                                                                                                                                             experiment) + (1 |
-                                                                                                                                                              paper),
+  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
   REML = FALSE,
   control = lmerControl(optimizer = "Nelder_Mead", optCtrl = list(maxfun =
-                                                                    200000))
+            200000))
 ) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
 
 constraints.predictors = c(
@@ -981,13 +976,10 @@ constraints.bf.cooks
 ```{r}
 constraints.full <- lmer(
   data = constraints,
-  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1 |
-                                                                                                                             condition) + (1 |
-                                                                                                                                             experiment) + (1 |
-                                                                                                                                                              paper),
+  formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper),
   REML = FALSE,
   control = lmerControl(optimizer = "Nelder_Mead", optCtrl = list(maxfun =
-                                                                    200000))
+            200000))
 ) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
 
 constraints.predictors = c(
@@ -1061,8 +1053,7 @@ goals.baseline.data <- goals %>%
                         "luo2011"))
 
 goals.b1 <- lmer(data = goals.baseline.data,
-                 formula = look_pref ~ 1 + ageday + (1 |
-                                                       condition))
+                 formula = look_pref ~ 1 + ageday + (1|condition))
 goals.b1.table <- sjPlot::tab_model(goals.b1,
                                     show.std	= TRUE,
                                     show.stat = TRUE,
@@ -1087,8 +1078,7 @@ excluded.subs <- c("2", "7", "6", "11")
 goals.b1.cooks <- lmer(
   data = goals.baseline.data %>%
     filter(!subj %in% excluded.subs),
-  formula = look_pref ~ 1 + ageday + (1 |
-                                        condition)
+  formula = look_pref ~ 1 + ageday + (1|condition)
 )
 summary(goals.b1.cooks)
 
@@ -1108,8 +1098,7 @@ For standard versions of the goals task, we found differential looking between t
 
 goals.m1 <- lmer(
   data = goals,
-  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 |
-                                                                                                                                                      condition) + (1 | experiment) + (1 | paper),
+  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1 | experiment) + (1 | paper),
   control = lmerControl(optimizer = "Nelder_Mead")
 )
 
@@ -1137,9 +1126,7 @@ sjPlot::plot_model(
 sjPlot::tab_model(goals.m1, show.stat = TRUE)
 plot(allEffects(goals.m1))
 
-goals.interventions <- cbind(gen.beta(effectsize::standardize(goals.m1)),
-                             gen.m(goals.m1),
-                             gen.ci(goals.m1)[5:12, ])
+goals.interventions <- cbind(gen.beta(effectsize::standardize(goals.m1)), gen.m(goals.m1), gen.ci(goals.m1)[5:12, ])
 
 
 cooks.goals <- cooks.distance(goals.m1, group = "subj")
@@ -1173,15 +1160,13 @@ knitr::kable(goals.where.influential)
 
 goals.m1.cooks <- lmer(
   data = goals.cooks,
-  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 |
-                                                                                                                                                      condition) + (1 | experiment) + (1 | paper),
+  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1 | experiment) + (1 | paper),
   control = lmerControl(optimizer = "Nelder_Mead")
 )
 
 goals.m1.cooks.beta <- lmer(
   data = goals.cooks,
-  formula = scale(look_pref) ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 |
-                                                                                                                                                             condition) + (1 | experiment) + (1 | paper),
+  formula = scale(look_pref) ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 | condition) + (1 | experiment) + (1 | paper),
   control = lmerControl(optimizer = "Nelder_Mead")
 )
 summary(goals.m1.cooks.beta)
@@ -1256,8 +1241,7 @@ confint(goals.m1.cooks.beta)
 ```{r}
 goals.full <- lmer(
   data = goals,
-  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 |
-                                                                                                                                                      condition) + (1 | experiment) + (1 | paper),
+  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1 | experiment) + (1 | paper),
   REML = FALSE,
   control = lmerControl(optimizer = "Nelder_Mead")
 ) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
@@ -1293,8 +1277,7 @@ goals.bf.full
 ```{r}
 goals.full.cooks <- lmer(
   data = goals.cooks,
-  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 |
-                                                                                                                                                      condition) + (1 | experiment) + (1 | paper),
+  formula = look_pref ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1|condition) + (1 | experiment) + (1 | paper),
   REML = FALSE,
   control = lmerControl(optimizer = "Nelder_Mead")
 ) # REML set to false to enable model comparison via likelihood methods, change optimizer to Nelder Mead to deal with failures to converge
