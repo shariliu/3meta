@@ -1,30 +1,29 @@
 ---
-title: "3meta BRMS"
+title: "3meta Bayesian"
 author: "Shari Liu"
-date: "2/22/2022"
-output: 
+date: "04/07/2023"
+output:
   html_document:
-    code_folding: show
+    code_folding: hide
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    number_sections: yes
+    theme: spacelab
 ---
 
 ```{r setup, include=FALSE}
 options(scipen = 999, digits = 4)
-knitr::opts_chunk$set(comment = "#", echo = FALSE)
+knitr::opts_chunk$set(comment = "#", warning = FALSE)
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
 
 options(repos = r)
 
-## load required packages
-ipak <- function (pkg) {
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-    install.packages(new.pkg, dependencies = TRUE)
-  sapply(pkg, require, character.only = TRUE)
-}
 
-packages <-
-  c(
+library(pacman)
+
+pacman::p_load(
     "tidyverse",
     "lsmeans",
     "influence.ME",
@@ -47,25 +46,32 @@ packages <-
     "DT",
     "tidybayes",
     "distributional",
-    "loo"
+    "loo",
+    "conflicted",
+    "here"
   )
 devtools::install_github("mvuorre/brmstools")
 
-ipak(packages)
 set.seed(429)
 
 # set summed contrasts
 options(contrasts = c("contr.sum", "contr.poly"))
 
-# fix bs with dplyr
-detach("package:dplyr", unload = TRUE)
-library("dplyr")
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
+conflict_prefer("rename", "dplyr")
+conflict_prefer("mutate", "dplyr")
+conflict_prefer("summarise", "dplyr")
+conflict_prefer("lmer", "lmerTest")
+conflict_prefer("here", "here")
+conflict_prefer("loo", "loo")
+
 
 sessionInfo()
 ```
 
 ```{r}
-ind.data.init <- read.csv("./fulldata.csv", header = TRUE)
+ind.data.init <- read.csv(here("preprocessed_data_for_analysis/fulldata.csv"), header = TRUE)
 str(ind.data.init)
 num_cols <- c("ageday", "exp_look", "unexp_look", "look_pref")
 factor_cols <- setdiff(colnames(ind.data.init), num_cols)
@@ -272,20 +278,24 @@ report.brms <- function(df, index, places) {
 
 ### Goals Task
 ```{r}
-#  not run, uncomment to reproduce results
-# goals.brms.intercept <- brm(formula = look_pref ~ 1 + ageday + (1|condition) + (1+condition|experiment) + (1+condition|paper),
-#                 data= goals,
-#                 warmup = 1000,
-#                 iter   = 5000,
-#                 family = student(link="identity"),
-#                 chains = 6,
-#                 thin = 2,
-#                 seed = 429,
-#                 save_all_pars = TRUE,
-#                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.intercept,file="goals.brms.intercept.rds")
-goals.brms.intercept <- readRDS("goals.brms.intercept.rds")
+# #  not run, uncomment to reproduce results
+# goals.brms.intercept <-
+#   brm(
+#     formula = look_pref ~ 1 + ageday + (1|condition) + (1+ condition|experiment) + (1+condition|paper),
+#     data = goals,
+#     warmup = 1000,
+#     iter   = 5000,
+#     family = student(link = "identity"),
+#     chains = 6,
+#     thin = 2,
+#     seed = 429,
+#     save_all_pars = TRUE,
+#     sample_prior = TRUE,
+#     control = list(adapt_delta = .98)
+#   )
+
+# saveRDS(goals.brms.intercept, file = here("brms_models/goals.brms.intercept.rds"))
+goals.brms.intercept <- readRDS(here("brms_models/goals.brms.intercept.rds"))
 # shinystan::launch_shinystan(goals.brms.intercept)
 summary(goals.brms.intercept)
 pp_check(goals.brms.intercept, ndraws = 10)
@@ -317,8 +327,8 @@ goals_hypothesis_vector <- c(
 #                 save_all_pars = TRUE,
 #                 sample_prior = TRUE,
 #                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.full,file="goals.brms.full.rds")
-goals.brms.full <- readRDS("goals.brms.full.rds")
+# saveRDS(goals.brms.full,file=here("brms_models/goals.brms.full.rds"))
+goals.brms.full <- readRDS(here("brms_models/goals.brms.full.rds"))
 # shinystan::launch_shinystan(goals.brms.full)
 summary(goals.brms.full)
 pp_check(goals.brms.full, nsamples = 10)
@@ -331,18 +341,21 @@ goals.brms.full.results <-
 
 
 # goals.brms.full.simplefx  <- brm(formula = look_pref ~ training_yesno + agent + action_consequence + bothobjects_present_visible_fam + location_object_goal_ambiguous + ageday + (1|condition) + (1|experiment) + (1|paper),
-#                 data= goals,
+#                 data = goals,
 #                 warmup = 1000,
 #                 iter   = 5000,
-#                 family = student(link="identity"),
+#                 family = student(link = "identity"),
 #                 chains = 6,
 #                 thin = 2,
 #                 seed = 429,
 #                 save_all_pars = TRUE,
 #                 sample_prior = TRUE,
-#                 control = list(adapt_delta = .98))
-# saveRDS(goals.brms.full.simplefx,file="goals.brms.full.simplefx.rds")
-goals.brms.full.simplerfx <- readRDS("goals.brms.full.simplefx.rds")
+#                  # tweaked due to divergent transitions
+#                 control = list(adapt_delta = .99, 
+#                                max_treedepth = 12)) 
+# saveRDS(goals.brms.full.simplefx,
+        # file = here("brms_models/goals.brms.full.simplefx.rds"))
+goals.brms.full.simplerfx <- readRDS(here("brms_models/goals.brms.full.simplefx.rds"))
 # shinystan::launch_shinystan(goals.brms.full.simplerfx)
 summary(goals.brms.full.simplerfx)
 pp_check(goals.brms.full.simplerfx, ndraws = 10)
@@ -387,7 +400,7 @@ hist(constraints$look_pref)
 
 
 constraints.brms.intercept <-
-  readRDS("constraints.brms.intercept.rds")
+  readRDS(here("brms_models/constraints.brms.intercept.rds"))
 # shinystan::launch_shinystan(constraints.brms.intercept)
 summary(constraints.brms.intercept)
 pp_check(constraints.brms.intercept, ndraws = 100)
@@ -418,7 +431,7 @@ constraints_hypothesis_vector <- c(
 #                 sample_prior = TRUE,
 #                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.full,file="constraints.brms.full.rds")
-constraints.brms.full <- readRDS("constraints.brms.full.rds")
+constraints.brms.full <- readRDS(here("brms_models/constraints.brms.full.rds"))
 pp_check(constraints.brms.full, ndraws=100)
 # shinystan::launch_shinystan(constraints.brms.full)
 summary(constraints.brms.full)
@@ -438,7 +451,7 @@ plot(constraints.brms.full.diag)
 #                 control = list(adapt_delta = .98))
 # saveRDS(constraints.brms.full.simplerfx,file="constraints.brms.full.simplerfx.rds")
 constraints.brms.full.simplerfx <-
-  readRDS("constraints.brms.full.simplerfx.rds")
+  readRDS(here("brms_models/constraints.brms.full.simplerfx.rds"))
 # shinystan::launch_shinystan(constraints.brms.full.simplerfx)
 constraints.brms.full.simplerfx.diag <-
   loo(constraints.brms.full.simplerfx)
