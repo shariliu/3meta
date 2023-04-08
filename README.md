@@ -2,7 +2,7 @@ This github repository contains all the data and code needed to reproduce the fi
 
 ## High level directory structure
 - `analysis` - folder including all data and code
-- `analysis/formatted_data` - csv and codebook for data from 7 included papers
+- `analysis/formatted_data` - csv and codebook for data from 8 included papers
 - `analysis/orig_data` - data as originally submitted
 - `analysis/ma_study_designs.csv` - csv of study designs for each condition, see [codebook](https://docs.google.com/spreadsheets/d/1-tEF2RZS6OjN8_kEeWTIHrI-lr5VpvC_58wk4X7YUC0/edit#gid=1931065704)
 - `analysis/ma_study_data.csv` - csv of looking time preference (unexpected - expected) for each subject for each condition
