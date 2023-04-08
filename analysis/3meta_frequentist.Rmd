@@ -606,7 +606,7 @@ Looking preference (unexpected - expected) for all individual conditions.
 
 
 plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
-                      aes(condition, look_pref, fill = paper)) +
+                      aes(condition, look_pref)) +
   geom_boxplot(outlier.alpha = 0.2,
                position = position_dodge2(preserve = "single")) +
   geom_hline(yintercept = 0) +
@@ -618,7 +618,7 @@ plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
     width = 0.2,
     colour = "black"
   ) +
-  theme_cowplot(10) +
+  theme_cowplot(9) +
   facet_grid( ~ paper,
               scales = "free_x",
               space = "free",
@@ -633,12 +633,11 @@ plot2.goals <- ggplot(ind.data %>% filter(task == "goals"),
       vjust = 0.2
     ),
     legend.position = "none"
-  ) +
-  scale_fill_brewer(palette = "Dark2")
+  ) 
 
 plot2.constraints <-
   ggplot(ind.data %>% filter(task == "constraints"),
-         aes(condition, look_pref, fill = paper)) +
+         aes(condition, look_pref)) +
   geom_boxplot(outlier.alpha = 0.2,
                position = position_dodge2(preserve = "single")) +
   geom_hline(yintercept = 0) +
@@ -650,7 +649,7 @@ plot2.constraints <-
     width = 0.2,
     colour = "black"
   ) +
-  theme_cowplot(10) +
+  theme_cowplot(9) +
   facet_grid( ~ paper,
               scales = "free_x",
               space = "free",
@@ -665,8 +664,8 @@ plot2.constraints <-
       vjust = 0.2
     ),
     legend.position = "none"
-  ) +
-  scale_fill_manual(values = wes_palette("Royal2"))
+  ) 
+  # scale_fill_manual(values = wes_palette("Royal2"))
 
 bottomrow <-
   (plot2.goals |
