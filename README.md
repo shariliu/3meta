@@ -48,18 +48,7 @@ This github repository contains all the data and code needed to reproduce the fi
 │   ├── goals.brms.intercept.rds
 │   └── goals.brms.intercept_gaussian.rds
 ├── figures
-│   ├── 3metaSCGfigure-230407.pdf
-│   ├── Fig1.pdf
-│   ├── Fig2.pdf
-│   ├── Fig3.afdesign
-│   ├── Fig3.pdf
-│   ├── Fig3_old.pdf
-│   ├── Fig4.afdesign
-│   ├── Fig4.pdf
-│   ├── Figure 4.png
-│   ├── Figure2_manipulations.afdesign
-│   ├── effects_cooks_bothtasks.afdesign
-│   └── mittens.afdesign
+│   ├── ...
 ├── orig_data
 │   ├── Luo 2011_data for Meta-analysis.xlsx
 │   ├── MittensData_ChildDevelopment14_Gerson&Woodward.xlsx
