@@ -4,17 +4,17 @@ author: "Shari Liu"
 date: "04/07/2023"
 output:
   html_document:
-    code_folding: hide
+    code_folding: show
     df_print: paged
     toc: yes
     toc_float: yes
     number_sections: yes
-    theme: spacelab
+    theme: sandstone
 ---
 
 ```{r setup, message = FALSE}
 options(scipen = 999, digits = 4)
-knitr::opts_chunk$set(comment = "#", cache = TRUE, warning = FALSE)
+knitr::opts_chunk$set(comment = "#", cache = FALSE, warning = FALSE)
 r = getOption("repos")
 r["CRAN"] = "http://cran.us.r-project.org"
 
@@ -713,7 +713,7 @@ constraints <- ind.data %>% filter(task == "constraints")
 
 # checking ref levels for all factors
 constraints$actor_hand <-
-  factor(constraints$actor_hand, levels = c("bare", "gloved", "mittened")) # for summed contr last level is dropped
+  factor(constraints$actor_hand, levels = c("bare", "gloved", "mittened")) # for summed contr first level is dropped
 constraints$action_consequence <-
   relevel(as.factor(constraints$action_consequence), ref = "state_change")
 constraints$agent_efficient_fam <-
@@ -734,7 +734,8 @@ constraints.baseline.data <- constraints %>%
                           "2_pickupbarehand"))
 
 constraints.b1 <- lmer(data = constraints.baseline.data,
-                       formula = look_pref ~ 1 + ageday + (1|condition))
+                       formula = look_pref ~ 1 + scale(ageday) + (1|condition))
+
 summary(constraints.b1)
 
 resid_panel(
@@ -790,7 +791,7 @@ constraints.baseline.cooks <- cbind(
 
 ```
 
-For standard versions of the constraints task, we found no differential looking between the expected and unexpected events, `r describe(constraints.baseline.data)`, `r report(constraints.baseline,2,3,2)`. This result held when we removed 3 influential observations, identified using Cook's distance, `r report(constraints.baseline.cooks,2,3,2)`.
+For standard versions of the constraints task, we found no differential looking between the expected and unexpected events, `r describe(constraints.baseline.data)`, `r report(constraints.baseline,1,3,2)`. This result held when we removed 3 influential observations, identified using Cook's distance, `r report(constraints.baseline.cooks,1,3,2)`.
 
 ### Intervention Analysis
 ```{r analysis}
@@ -799,7 +800,7 @@ For standard versions of the constraints task, we found no differential looking 
 constraints.m1 <- lmer(
   data = constraints,
   formula = look_pref ~ training_yesno + action_causal + action_consequence + actor_hand + agent_efficient_fam + ageday + (1|condition) + (1|experiment) + (1|paper)
-)
+) 
 
 summary(constraints.m1)
 
@@ -811,6 +812,7 @@ resid_panel(
 )
 
 cooks1 <- cooks.distance(constraints.m1, group = "subj")
+
 dotplot_diag(
   x = cooks1,
   cutoff = "internal",
@@ -1029,6 +1031,7 @@ goals <- ind.data %>% filter(task == "goals")
 goals$action_consequence <-
   relevel(as.factor(goals$action_consequence), ref = "none")
 goals$agent <-
+   # factor(goals$agent, levels = c("hand", "person", "animate")) # last level gets dropped in model estimates
   factor(goals$agent, levels = c("animate", "person", "hand")) # last level gets dropped in model estimates
 goals$training_yesno <-
   relevel(as.factor(goals$training_yesno), ref = "yes")
@@ -1046,7 +1049,8 @@ goals.baseline.data <- goals %>%
                         "luo2011"))
 
 goals.b1 <- lmer(data = goals.baseline.data,
-                 formula = look_pref ~ 1 + ageday + (1|condition))
+                 formula = look_pref ~ 1 + scale(ageday) + (1|condition))
+
 goals.b1.table <- sjPlot::tab_model(goals.b1,
                                     show.std	= TRUE,
                                     show.stat = TRUE,
@@ -1071,7 +1075,7 @@ excluded.subs <- c("2", "7", "6", "11")
 goals.b1.cooks <- lmer(
   data = goals.baseline.data %>%
     filter(!subj %in% excluded.subs),
-  formula = look_pref ~ 1 + ageday + (1|condition)
+  formula = look_pref ~ 1 + scale(ageday) + (1|condition)
 )
 summary(goals.b1.cooks)
 
@@ -1083,7 +1087,7 @@ goals.baseline.cooks <- cbind(
 
 ```
 
-For standard versions of the goals task, we found differential looking between the expected and unexpected events, `r describe(goals.baseline.data)`, `r report(goals.baseline,2,3,2)`. However, this was driven by 4 influential observations - without these 4 observations, there was no longer a reliable looking preference, `r report(goals.baseline.cooks,2,3,2)`. 
+For standard versions of the goals task, we no differential looking between the expected and unexpected events, `r describe(goals.baseline.data)`, `r report(goals.baseline,1,3,2)`. This held after removing 4 influential observations (Cook's Distance), `r report(goals.baseline.cooks,1,3,2)`. 
 
 ### Intervention Analysis
 ```{r}
@@ -1159,7 +1163,7 @@ goals.m1.cooks <- lmer(
 
 goals.m1.cooks.beta <- lmer(
   data = goals.cooks,
-  formula = scale(look_pref) ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + ageday + (1 | condition) + (1 | experiment) + (1 | paper),
+  formula = scale(look_pref) ~ training_yesno  + action_consequence + location_object_goal_ambiguous + agent + bothobjects_present_visible_fam + scale(ageday) + (1 | condition) + (1 | experiment) + (1 | paper),
   control = lmerControl(optimizer = "Nelder_Mead")
 )
 summary(goals.m1.cooks.beta)
@@ -1185,11 +1189,11 @@ regressionplot2 <- sjPlot::plot_model(
   axis.labels = c(
     "Agent (person)",
     "Age in days",
+    "Both objects present during fam/hab",
     "Sticky mittens training",
     "State change",
-    "Both objects present during fam/hab",
-    "Agent (self-propelled object)",
-    "Unambiguous location or object goal"
+    "Unambiguous location or object goal",
+    "Agent (self-propelled object)"
   ),
   axis.title = c("Effect on looking (unexpected - expected) in standard deviations"),
   show.values = TRUE,
@@ -1225,7 +1229,7 @@ confint(goals.m1.cooks.beta)
 
 
 ```{r}
-(regressionplot1 | regressionplot2) + plot_annotation(tag_levels = 'A')
+(regressionplot2 | regressionplot1) + plot_annotation(tag_levels = 'A')
 ```
 
 
