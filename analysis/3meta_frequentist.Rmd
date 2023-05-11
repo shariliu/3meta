@@ -846,7 +846,7 @@ constraints.m1.beta <-
 constraints.interventions <- cbind(
   gen.beta(effectsize::standardize(constraints.m1)),
   gen.m(constraints.m1),
-  gen.ci(constraints.m1)[3:10, ]
+  gen.ci(constraints.m1)[5:12, ]
 )
 
 constraints.cooks <- constraints[which(cooks1 <= 4 / 264), ]
@@ -918,7 +918,7 @@ regressionplot1 <- sjPlot::plot_model(
 constraints.interventions.cooks <- cbind(
   gen.beta(effectsize::standardize(constraints.m1.cooks)),
   gen.m(constraints.m1.cooks),
-  gen.ci(constraints.m1.cooks)[3:10, ]
+  gen.ci(constraints.m1.cooks)[5:12, ]
 )
 
 sjPlot::tab_model(constraints.m1.cooks.beta, show.stat = TRUE)
